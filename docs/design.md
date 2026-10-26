@@ -2,7 +2,7 @@
 
 > 狀態：已核准（2026-10-26）
 > 日期：2026-10-26
-> 修訂：2026-10-26 依 Phase 01 實測修訂 1 的 JSON 列、3.3（公司名稱比對方式、殼層與系統清單）、3.11 文字摘要範例與第 6 章風險 1（隨 Phase 01 計畫核准）
+> 修訂：2026-10-26 依 Phase 01 實測修訂 1 的 JSON 列、3.3（公司名稱比對方式、殼層與系統清單）、3.11 文字摘要範例與第 6 章風險 1（隨 Phase 01 計畫核准）；2026-10-26 依 Phase 01 整體審查補上 3.3 的孤兒輔助行程規則與輔助行程清單
 > 依據：[SPEC](spec.md)（2026-10-26 核准）。條文編號（F-、R-、A-、X-）沿用 SPEC。
 >
 > 標示「〔使用者決定〕」的是使用者在討論中明確選擇的項目，其餘是 Claude 的提案，核准本文件即視為採用。
@@ -112,7 +112,7 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 **清單**（R-7，實作時可依實測調整）：
 
 - 殼層與系統行程（往上追到它們就停止）：`Idle`、`System`、`Secure System`、`Registry`、`Memory Compression`、`smss.exe`、`csrss.exe`、`wininit.exe`、`winlogon.exe`、`services.exe`、`svchost.exe`、`userinit.exe`、`explorer.exe`、`sihost.exe`。
-- 輔助行程（R-2，一律歸屬啟動者）：`cmd.exe`、`conhost.exe`、`OpenConsole.exe`、`pwsh.exe`、`powershell.exe`、`node.exe`、`bun.exe`、`python.exe`、`pythonw.exe`、`uv.exe`、`uvx.exe`、`msedgewebview2.exe`。
+- 輔助行程（R-2，一律歸屬啟動者）：`cmd.exe`、`conhost.exe`、`OpenConsole.exe`、`pwsh.exe`、`powershell.exe`、`bash.exe`、`sh.exe`、`node.exe`、`node_repl.exe`、`bun.exe`、`python.exe`、`pythonw.exe`、`uv.exe`、`uvx.exe`、`msedgewebview2.exe`。
 
 **「獨立應用程式」的判斷**（R-1 第三點）：行程不是輔助行程，而且它和父行程的執行檔公司名稱（`FileVersionInfo.CompanyName`）第一個單字不同，或任一方取不到公司名稱。第一個單字是去頭尾空白後，開頭連續的字母或數字，比較時不分大小寫。
 
@@ -128,13 +128,15 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 **步驟**：
 
 1. 父行程存在且建立時間不晚於子行程，才視為有效父行程（R-3）。
-2. 對每個行程往上追：沒有有效父行程、父行程在殼層與系統清單中、或目前行程符合「獨立應用程式」，就以目前行程為最上層；否則改看父行程，繼續往上。結果以 PID 記憶，避免重算。
+2. 對每個行程往上追：沒有有效父行程、父行程在殼層與系統清單中、父行程是孤兒輔助行程、或目前行程符合「獨立應用程式」，就以目前行程為最上層；否則改看父行程，繼續往上。結果以 PID 記憶，避免重算。
 3. 以最上層行程的執行檔路徑（取不到時用映像名稱）為分組鍵，路徑相同的最上層行程自然合併成一列（R-5）。
 4. 最上層執行檔位於 `%SystemRoot%` 之下，或取不到路徑而名稱在殼層與系統清單中的，全部併入「Windows（系統與服務）」（R-6）。
 5. 名稱取最上層執行檔的檔案描述，取不到時用執行檔名稱（R-4）。
 6. 展開明細（F-23）依執行檔名稱合併計數；node 行程再依命令列取出的套件標籤分開，例如命令列含 `@playwright/mcp` 就標為「node：@playwright/mcp」，取不到時標為「node」。
 
 **實測**（2026-10-26）：Claude 桌面版的公司名稱是 `Anthropic`，工作階段（Claude Code）是 `Anthropic PBC`。原本「完整名稱相同」的判斷會把工作階段拆出去，因此改比第一個單字。`Idle`、`Secure System`、`Memory Compression` 沒有執行檔路徑，加進殼層與系統清單後，才會依 R-6 併入「Windows（系統與服務）」。
+
+**孤兒輔助行程**（R-1 第二點「父行程已不存在」的解讀）：輔助行程不是應用程式。一個輔助行程往上都是輔助行程，最後父行程不存在或是殼層與系統行程時，代表啟動它的應用程式已不存在，它就是孤兒輔助行程，它的子孫各自成為最上層。例如 Claude 或 Codex 結束後留下的 `cmd.exe → node.exe`，node 依 R-5 併入 node 那一列，不會跟著 `cmd.exe` 進入「Windows（系統與服務）」；從檔案總管開啟的 pwsh 底下的程式也各自成列。這條規則與 `bash.exe`、`sh.exe`、`node_repl.exe` 是 Phase 01 整體審查後補上的：MCP 常以 `cmd /c npx` 啟動，而 `node_repl.exe` 在 2026-10-26 的實機上有 12 個。
 
 ### 3.4 取樣（MemSweep.Desktop）
 
