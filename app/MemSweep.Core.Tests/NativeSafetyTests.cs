@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using MemSweep.Cli;
 using MemSweep.Core;
+using MemSweep.Desktop;
 
 namespace MemSweep.Core.Tests;
 
@@ -18,13 +19,18 @@ public sealed class NativeSafetyTests
         "NtSetSystemInformation",
         "SetSystemFileCacheSize",
         "AdjustTokenPrivileges",
+        "TerminateProcess",
+        "NtTerminateProcess",
+        "NtSetInformationProcess",
+        "VirtualFreeEx",
     ];
 
-    // Phase 02 加入 MemSweep.Desktop 後，也要把它的組件加進這份清單
+    // 只檢查以 DllImport／LibraryImport 宣告的呼叫；NativeLibrary.GetExport 或函式指標不在檢查範圍
     private static readonly Assembly[] ShippedAssemblies =
     [
         typeof(SystemReader).Assembly,
         typeof(CliApp).Assembly,
+        typeof(SingleInstance).Assembly,
     ];
 
     private static List<string> EntryPoints() =>
@@ -52,6 +58,12 @@ public sealed class NativeSafetyTests
                 "NtQueryInformationProcess",
             },
             entryPoints);
+    }
+
+    [TestMethod]
+    public void ScansTheDesktopAssembly()
+    {
+        CollectionAssert.Contains(EntryPoints(), "DestroyIcon");
     }
 
     [TestMethod]

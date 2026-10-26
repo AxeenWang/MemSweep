@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MemSweep.Core\MemSweep.Core.csproj" />
     <ProjectReference Include="..\MemSweep.Cli\MemSweep.Cli.csproj" />
+    <ProjectReference Include="..\MemSweep.Desktop\MemSweep.Desktop.csproj" />
   </ItemGroup>
 
 </Project>
