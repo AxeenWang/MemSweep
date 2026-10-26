@@ -17,10 +17,18 @@ Change the marker to `CodeLab-Governance: required` when failed managed-mode ver
 
 ## Project
 
-MemSweep is a Windows memory (RAM) utility. Its scope, features, and technology stack are not decided yet. They will be defined in the SPEC and Design documents, and this file will gain the stack, commands, and layout once the Design is approved.
+MemSweep is a read-only Windows commit-charge monitor. A tray app shows commit usage, the applications that hold it, and commit peaks. A command-line tool lets an agent check commit headroom before memory-heavy work. `docs/spec.md` defines what to build, and `docs/design.md` defines how.
 
 - Remote: `https://github.com/AxeenWang/MemSweep.git`
 - Default branch: `main`
+
+### Technology
+
+- C# on .NET 10. Windows use WPF with software rendering for the whole process; the tray icon uses the built-in WinForms `NotifyIcon`.
+- Win32 access goes through `LibraryImport` and is limited to read-only queries.
+- No third-party runtime dependencies. MSTest (`MSTest.Sdk`) is the only development-time package.
+- Publish framework-dependent for win-x64, with both exes in one folder.
+- Build, test, and publish commands are added here once Phase 01 confirms them.
 
 ## Language
 
@@ -41,7 +49,10 @@ The SPEC is approved before the Design is written, and the Design is approved be
 ## Repository Layout
 
 - The repository root holds only rule files, `README.md`, repository configuration, and `docs/`.
-- Application code (project files, source, tests, and build output) lives in one dedicated subfolder named in the Design. Never place it in the repository root.
+- Application code (project files, source, tests, and build output) lives in `app/`. Never place it in the repository root.
+  - `app/` holds `MemSweep.slnx`, `global.json`, `Directory.Build.props`, and the projects `MemSweep.Core/`, `MemSweep.Desktop/` (builds `MemSweep.exe`), `MemSweep.Cli/` (builds `memsweep-cli.exe`), and `MemSweep.Core.Tests/`.
+  - Build and publish output goes to `app/artifacts/`, which is not versioned.
+- Development plans live in `docs/development/`, one file per Phase named `phase-NN-<topic>.md`.
 - Before proposing folder names, check that no name repeats the meaning of its parent or child, for example `src/src` or `app/src/app`.
 
 ## Branches and Pull Requests

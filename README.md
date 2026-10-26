@@ -1,5 +1,5 @@
 # MemSweep
 
-Windows 記憶體（RAM）工具，目前在規劃階段。
+唯讀的 Windows commit 監看工具：系統匣顯示 commit 使用率、佔用 commit 的應用程式與 commit 尖峰，另附命令列工具 `memsweep-cli`，讓代理在吃記憶體的工作前先檢查剩餘 commit。
 
-功能範圍與技術選型尚未決定，確定後會寫在 `docs/` 的 SPEC 與 Design 文件。
+目前在開發中。需求見 [docs/spec.md](docs/spec.md)，設計見 [docs/design.md](docs/design.md)。

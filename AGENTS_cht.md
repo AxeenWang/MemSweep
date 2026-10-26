@@ -19,10 +19,18 @@ Change the marker to `CodeLab-Governance: required` when failed managed-mode ver
 
 ## 專案
 
-MemSweep 是 Windows 記憶體（RAM）工具。功能範圍、功能清單與技術選型尚未決定，將在 SPEC 與 Design 文件中定義；Design 核准後，本檔會補上技術選型、指令與目錄版面。
+MemSweep 是唯讀的 Windows commit 監看工具。系統匣程式顯示 commit 使用率、佔用 commit 的應用程式與 commit 尖峰；命令列工具讓代理在吃記憶體的工作開始前，先檢查剩餘 commit。要做什麼由 `docs/spec.md` 定義，怎麼做由 `docs/design.md` 定義。
 
 - 遠端：`https://github.com/AxeenWang/MemSweep.git`
 - 預設分支：`main`
+
+### 技術
+
+- C#、.NET 10。視窗使用 WPF，整個行程固定軟體繪圖；系統匣圖示使用 .NET 內建的 WinForms `NotifyIcon`。
+- Win32 一律透過 `LibraryImport` 呼叫，而且只做唯讀查詢。
+- 執行時期不依賴第三方套件。開發時期唯一的套件是 MSTest（`MSTest.Sdk`）。
+- 以 framework-dependent、win-x64 發佈，兩支 exe 放在同一個資料夾。
+- 建置、測試與發佈指令在 Phase 01 確認後補到這裡。
 
 ## 語言
 
@@ -43,7 +51,10 @@ SPEC 核准後才寫 Design，Design 核准後才寫 Development 計畫。Develo
 ## Repo 目錄版面
 
 - repo 根目錄只放規則檔、`README.md`、repo 設定檔與 `docs/`。
-- 應用程式碼（專案檔、原始碼、測試與建置產出）放在 Design 指定的單一專屬子資料夾，絕不放在 repo 根目錄。
+- 應用程式碼（專案檔、原始碼、測試與建置產出）放在 `app/`，絕不放在 repo 根目錄。
+  - `app/` 內有 `MemSweep.slnx`、`global.json`、`Directory.Build.props`，以及專案 `MemSweep.Core/`、`MemSweep.Desktop/`（產出 `MemSweep.exe`）、`MemSweep.Cli/`（產出 `memsweep-cli.exe`）、`MemSweep.Core.Tests/`。
+  - 建置與發佈產出放在 `app/artifacts/`，不進版控。
+- Development 計畫放在 `docs/development/`，每個 Phase 一份，命名為 `phase-NN-<主題>.md`。
 - 提出資料夾名稱前，先檢查名稱是否和上層或下層意思重複，例如 `src/src`、`app/src/app`。
 
 ## 分支與 Pull Request
