@@ -2,4 +2,5 @@
   <Project Path="MemSweep.Cli/MemSweep.Cli.csproj" />
   <Project Path="MemSweep.Core.Tests/MemSweep.Core.Tests.csproj" />
   <Project Path="MemSweep.Core/MemSweep.Core.csproj" />
+  <Project Path="MemSweep.Desktop/MemSweep.Desktop.csproj" />
 </Solution>

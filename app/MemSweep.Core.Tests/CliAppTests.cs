@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using MemSweep.Cli;
 using MemSweep.Core;
 
@@ -94,6 +95,37 @@ public sealed class CliAppTests
         Assert.AreEqual("錯誤：--need 需要大於 0 的 GB 數值，收到「" + need + "」\n" + CliApp.Usage, run.Error);
         Assert.AreEqual(string.Empty, run.Output);
         Assert.AreEqual(0, run.SampleCalls);
+    }
+
+    [TestMethod]
+    [DataRow(new[] { "status" })]
+    [DataRow(new[] { "status", "--json" })]
+    [DataRow(new[] { "check", "--need", "5" })]
+    public void SamplingFailureIsExitCode3(string[] args)
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        int exitCode = CliApp.Run(args, () => throw new Win32Exception(5, "存取被拒。"), output, error);
+
+        Assert.AreEqual(CliApp.ExitSampleError, exitCode);
+        Assert.AreEqual("錯誤：無法取得系統記憶體資訊：存取被拒。\n", error.ToString());
+        Assert.AreEqual(string.Empty, output.ToString());
+    }
+
+    [TestMethod]
+    public void NtStatusFailureIsExitCode3()
+    {
+        var error = new StringWriter();
+
+        int exitCode = CliApp.Run(
+            ["status"],
+            () => throw new InvalidOperationException("NtQuerySystemInformation(5) 失敗：0xC0000017"),
+            new StringWriter(),
+            error);
+
+        Assert.AreEqual(CliApp.ExitSampleError, exitCode);
+        Assert.AreEqual("錯誤：無法取得系統記憶體資訊：NtQuerySystemInformation(5) 失敗：0xC0000017\n", error.ToString());
     }
 
     [TestMethod]

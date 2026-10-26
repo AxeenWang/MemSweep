@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>MemSweep</AssemblyName>
+    <RootNamespace>MemSweep.Desktop</RootNamespace>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WPF 與 WinForms 有同名型別（Application 等），WinForms 只在需要的檔案明確 using -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+    <InternalsVisibleTo Include="MemSweep.Core.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MemSweep.Core\MemSweep.Core.csproj" />
+  </ItemGroup>
+
+</Project>
