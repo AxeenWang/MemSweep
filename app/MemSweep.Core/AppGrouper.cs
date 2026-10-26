@@ -16,8 +16,8 @@ public sealed class AppGrouper
     // 輔助行程一律歸屬啟動它的應用程式（R-2）
     private static readonly HashSet<string> HelperNames = new(StringComparer.OrdinalIgnoreCase)
     {
-        "cmd.exe", "conhost.exe", "OpenConsole.exe", "pwsh.exe", "powershell.exe",
-        "node.exe", "bun.exe", "python.exe", "pythonw.exe", "uv.exe", "uvx.exe", "msedgewebview2.exe",
+        "cmd.exe", "conhost.exe", "OpenConsole.exe", "pwsh.exe", "powershell.exe", "bash.exe", "sh.exe",
+        "node.exe", "node_repl.exe", "bun.exe", "python.exe", "pythonw.exe", "uv.exe", "uvx.exe", "msedgewebview2.exe",
     };
 
     private readonly string _windowsDirectoryPrefix;
@@ -102,6 +102,7 @@ public sealed class AppGrouper
             chain.Add(current.Pid);
             if (!TryGetParent(current, byPid, out var parent)
                 || ShellAndSystemNames.Contains(parent.ImageName)
+                || IsOrphanHelper(parent, byPid)
                 || IsIndependent(current, InfoOf(infos, current.Pid), InfoOf(infos, parent.Pid))
                 || chain.Contains(parent.Pid))
             {
@@ -128,6 +129,23 @@ public sealed class AppGrouper
             return true;
         }
         parent = null!;
+        return false;
+    }
+
+    // R-1 第二點的解讀：輔助行程不是應用程式。輔助行程一路往上都是輔助行程，最後父行程不存在或是殼層，
+    // 代表啟動它的應用程式已不存在，它的子孫各自成為最上層，不會跟著它併進 Windows 或殼層那一列
+    private static bool IsOrphanHelper(ProcessSample process, Dictionary<int, ProcessSample> byPid)
+    {
+        var visited = new HashSet<int>();
+        var current = process;
+        while (HelperNames.Contains(current.ImageName) && visited.Add(current.Pid))
+        {
+            if (!TryGetParent(current, byPid, out var parent) || ShellAndSystemNames.Contains(parent.ImageName))
+            {
+                return true;
+            }
+            current = parent;
+        }
         return false;
     }
 

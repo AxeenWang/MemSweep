@@ -152,7 +152,7 @@ public sealed class AppGrouperTests
     }
 
     [TestMethod]
-    public void HelperStartedFromTheShellIsItsOwnRow()
+    public void HelperStartedFromTheShellDoesNotAbsorbItsChildren()
     {
         var grouped = new Fixture()
             .Add(10, 4, "explorer.exe", 90, @"C:\Windows\explorer.exe", "Microsoft Corporation", "Windows 檔案總管")
@@ -160,7 +160,40 @@ public sealed class AppGrouperTests
             .Add(610, 600, "node.exe", 35, @"C:\Program Files\nodejs\node.exe", "Node.js", "Node.js JavaScript Runtime")
             .Group();
 
-        Assert.AreEqual("pwsh.exe×1, node.exe×1", Components(Row(grouped, "PowerShell 7")));
+        Assert.AreEqual("pwsh.exe×1", Components(Row(grouped, "PowerShell 7")));
+        Assert.AreEqual("node.exe×1", Components(Row(grouped, "Node.js JavaScript Runtime")));
+    }
+
+    [TestMethod]
+    public void OrphanedCmdWrapperDoesNotHideNodeInTheWindowsRow()
+    {
+        // MCP 常以 cmd /c npx 啟動；啟動它的 Claude 或 Codex 結束後，留下 cmd.exe → node.exe
+        var grouped = new Fixture()
+            .Add(1200, 9999, "cmd.exe", 4, @"C:\Windows\System32\cmd.exe", "Microsoft Corporation", "Windows 命令處理程式")
+            .Add(1210, 1200, "node.exe", 300, @"C:\Program Files\nodejs\node.exe", "Node.js", "Node.js JavaScript Runtime", "@playwright/mcp")
+            .Add(1220, 9998, "cmd.exe", 5, @"C:\Windows\System32\cmd.exe", "Microsoft Corporation", "Windows 命令處理程式")
+            .Add(1230, 1220, "node.exe", 200, @"C:\Program Files\nodejs\node.exe", "Node.js", "Node.js JavaScript Runtime", "@upstash/context7-mcp")
+            .Group();
+
+        var node = Row(grouped, "Node.js JavaScript Runtime");
+        Assert.AreEqual(2, node.ProcessCount);
+        Assert.AreEqual(500 * Mb, node.CommitBytes);
+        Assert.AreEqual("cmd.exe×2", Components(Row(grouped, AppGrouper.WindowsGroupName)));
+    }
+
+    [TestMethod]
+    public void GitBashAndCodexRuntimeAreHelpers()
+    {
+        var grouped = new Fixture()
+            .Add(1300, 9999, "claude.exe", 650, @"C:\Users\me\claude-code\claude.exe", "Anthropic PBC", "Claude Code")
+            .Add(1310, 1300, "bash.exe", 6, @"C:\Program Files\Git\usr\bin\bash.exe", "The Git Development Community", "GNU Bash")
+            .Add(1320, 1310, "sh.exe", 5, @"C:\Program Files\Git\usr\bin\sh.exe", "The Git Development Community", "GNU sh")
+            .Add(1400, 9999, "codex.exe", 100, @"C:\Users\me\Codex\bin\codex.exe")
+            .Add(1410, 1400, "node_repl.exe", 70, @"C:\Users\me\Codex\runtimes\cua_node\bin\node_repl.exe")
+            .Group();
+
+        Assert.AreEqual("claude.exe×1, bash.exe×1, sh.exe×1", Components(Row(grouped, "Claude Code")));
+        Assert.AreEqual("codex.exe×1, node_repl.exe×1", Components(Row(grouped, "codex.exe")));
     }
 
     [TestMethod]
