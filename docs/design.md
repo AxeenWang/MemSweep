@@ -142,6 +142,7 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 
 - 背景執行緒以 `PeriodicTimer` 每 2 秒取樣一次（F-04），完成後透過 `Dispatcher` 交給 UI 更新，避免查詢新行程的資訊時卡住介面。
 - 每次取樣：`SystemReader` → `AppGrouper` → `PeakTracker`，結果發布給系統匣圖示與開著的視窗。
+- 取樣迴圈因程式錯誤結束時，以 `Dispatcher.BeginInvoke` 在 UI 執行緒重新拋出，讓程式明顯結束。不可用 `Dispatcher.InvokeAsync`：它會把例外收進回傳的 Task，沒有人觀察就消失，圖示會停在舊數字（Phase 02 整體審查發現）。
 
 ### 3.5 系統匣圖示
 
