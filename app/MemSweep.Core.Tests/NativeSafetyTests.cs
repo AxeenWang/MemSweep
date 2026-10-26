@@ -63,7 +63,7 @@ public sealed class NativeSafetyTests
     [TestMethod]
     public void ScansTheDesktopAssembly()
     {
-        CollectionAssert.Contains(EntryPoints(), "DestroyIcon");
+        CollectionAssert.IsSubsetOf(new[] { "DestroyIcon", "AllowSetForegroundWindow", "GetForegroundWindow" }, EntryPoints());
     }
 
     [TestMethod]

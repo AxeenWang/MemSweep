@@ -22,6 +22,14 @@ public sealed class FlyoutTests
     }
 
     [TestMethod]
+    public void AnInactivePanelHidesWhenTheForegroundWindowChanges()
+    {
+        Assert.AreEqual(InactiveCheck.KeepWatching, FlyoutPlacement.Next(isActive: false, foregroundAtShow: 100, foregroundNow: 100));
+        Assert.AreEqual(InactiveCheck.Hide, FlyoutPlacement.Next(isActive: false, foregroundAtShow: 100, foregroundNow: 200));
+        Assert.AreEqual(InactiveCheck.StopWatching, FlyoutPlacement.Next(isActive: true, foregroundAtShow: 100, foregroundNow: 200));
+    }
+
+    [TestMethod]
     public void ThemeFollowsAppsUseLightTheme()
     {
         Assert.AreEqual(ThemeKind.Dark, ThemeReader.FromRegistryValue(0));
