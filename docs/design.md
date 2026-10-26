@@ -2,7 +2,7 @@
 
 > 狀態：已核准（2026-10-26）
 > 日期：2026-10-26
-> 修訂：2026-10-26 依 Phase 01 實測修訂 1 的 JSON 列、3.3（公司名稱比對方式、殼層與系統清單）、3.11 文字摘要範例與第 6 章風險 1（隨 Phase 01 計畫核准）；2026-10-26 依 Phase 01 整體審查補上 3.3 的孤兒輔助行程規則與輔助行程清單；2026-10-26 隨 Phase 02 計畫修訂 3.3 步驟 6 用字、3.6 小面板的建立時機與位置、3.7 前景許可、3.11 結束碼 3、第 4 章 A-07 清單與第 6 章風險 3
+> 修訂：2026-10-26 依 Phase 01 實測修訂 1 的 JSON 列、3.3（公司名稱比對方式、殼層與系統清單）、3.11 文字摘要範例與第 6 章風險 1（隨 Phase 01 計畫核准）；2026-10-26 依 Phase 01 整體審查補上 3.3 的孤兒輔助行程規則與輔助行程清單；2026-10-26 隨 Phase 02 計畫修訂 3.3 步驟 6 用字、3.6 小面板的建立時機與位置、3.7 前景許可、3.11 結束碼 3、第 4 章 A-07 清單與第 6 章風險 3；2026-10-26 隨 Phase 03 計畫修訂第 3 章架構圖、3.1 元件表、3.6 完整視窗、程式圖示與自訂標題列、3.9 停用條件與寫入失敗、3.10 重新啟動時接續、第 5 章 Phase 03 列與第 6 章風險 3
 > 依據：[SPEC](spec.md)（2026-10-26 核准）。條文編號（F-、R-、A-、X-）沿用 SPEC。
 >
 > 標示「〔使用者決定〕」的是使用者在討論中明確選擇的項目，其餘是 Claude 的提案，核准本文件即視為採用。
@@ -68,7 +68,7 @@ MemSweep/                      repo 根目錄
 MemSweep.Core
   SystemReader ──▶ SystemSnapshot ──▶ AppGrouper ──▶ GroupedSnapshot ──┬──▶ ReportFormatter（文字／JSON）
   ProcessInfoCache（每個行程只查一次路徑、檔案描述、公司）                ├──▶ HeadroomCheck（check 結束碼）
-                                                                        └──▶ PeakTracker ──▶ PeakStore（CSV）
+                                                                        └──▶ PeakRecorder ──▶ PeakTracker、PeakStore（CSV）
   SettingsStore（JSON）
 
 MemSweep.Desktop：每 2 秒取樣 ──▶ 系統匣圖示、小面板、完整視窗；PeakTracker；單一執行個體；開機啟動
@@ -85,8 +85,9 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 | `AppGrouper` | 依 3.3 的演算法，把快照轉成依 commit 排序的應用程式清單與「系統（不屬於任何程式）」 | 第 8 章、F-23 |
 | `ReportFormatter` | 文字摘要與 JSON | F-40、F-41、F-12 |
 | `HeadroomCheck` | 計算剩餘 commit，回傳結束碼與輸出內容 | F-42 |
-| `PeakTracker` | 追蹤開機尖峰與每日尖峰 | F-30～F-32 |
-| `PeakStore` | CSV 讀寫、保留天數清理 | F-33、F-34 |
+| `PeakTracker` | 追蹤開機尖峰與每日尖峰，保存全部尖峰紀錄並做保留天數清理 | F-30～F-33 |
+| `PeakCsv`、`PeakStore` | CSV 格式；`data\` 裡紀錄檔的讀寫 | F-34、F-52 |
+| `PeakRecorder` | 以每次取樣更新 `PeakTracker`，依 3.9 的時機寫入 `PeakStore`；取樣執行緒與結束時共用 | F-33、F-34 |
 | `SettingsStore` | 讀寫 `settings.json`，提供預設值與驗證 | F-50、F-52 |
 
 ### 3.2 使用的 Win32 API
@@ -156,7 +157,9 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 - `App.OnStartup` 在建立任何視窗前設定 `RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly`。
 - 小面板（F-10～F-12）：無邊框、不顯示在工作列、最上層；出現在主螢幕工作區的右下角（Windows 11 的通知區域固定在主螢幕底部的工作列）；失去焦點或按 Esc 時隱藏。視窗在第一次開啟時才建立，之後以顯示／隱藏切換（量測顯示關閉視窗也不會釋放記憶體，隱藏可讓重開更快）。Phase 02 實測：只掛在系統匣時行程約 18 MB，若啟動時就建立小面板約 58 MB，開過小面板後約 80 MB。
 - 小面板開著時點系統匣圖示，焦點會先移走讓小面板隱藏；隱藏後 400 毫秒內的同一次點擊不再把它打開，所以點圖示可以開關小面板。
-- 完整視窗（F-20～F-24）：一般視窗，關閉時改為隱藏。三個分頁；「程式」分頁是可展開的表格，具體用哪種控制項由 Phase 03 計畫決定。
+- 完整視窗（F-20～F-24）：一般視窗，三個分頁。第一次開啟時才建立，只在顯示時更新。關閉時真正關閉，並在 UI 空閒時以 `GCCollectionMode.Aggressive` 回收 MemSweep 自己的記憶體，下次開啟再建立：隱藏的視窗會保留整個畫面樹，Phase 03 原型實測隱藏後仍約 109 MB，關閉並回收後穩定在約 86 MB。「程式」分頁用 `ItemsControl`，每 2 秒原地更新各列而不整份重建；展開狀態保存在顯示模型，關閉再開仍在。
+- 程式圖示（F-62）：`MemSweep.Desktop/Assets/MemSweep.ico`，深藍圓角方塊上的 240 度 commit 量表，綠、橘、紅三段依預設門檻 70%、85% 分段（配色同深色主題），白色指針指向 80%。含 16、20、24、32、40、48、64、256 px 八格，每格都是 PNG。兩支 exe 以 `ApplicationIcon` 內嵌，自訂標題列依 DPI 取用最接近的一格；系統匣仍顯示數字（F-02）。
+- 自訂標題列（F-62）：視窗以 `WindowChrome` 取代系統標題列（`CaptionHeight` 32、`GlassFrameThickness` 0），拖曳、雙擊最大化、邊緣調整大小、右鍵系統選單與貼齊仍由系統處理。`TitleBar` 顯示圖示、視窗標題與最小化、最大化（還原）、關閉三個按鈕（Segoe Fluent Icons 字型），顏色跟著深淺色，滑過關閉按鈕時為紅底白字，視窗不在前景時標題變淡。最大化時內容往內縮 `SM_CXSIZEFRAME` + `SM_CXPADDEDBORDER`（WPF 的 `SystemParameters` 不含邊框間距），標題列才不會超出螢幕。不提供 Windows 11 滑過最大化按鈕時的貼齊版面選單，可用 Win+Z 或拖曳到螢幕邊緣。完整視窗的捲軸也改成跟著深淺色的細捲軸。設定視窗（Phase 04）沿用同一個 `TitleBar`。
 - 設定視窗（F-50）：橘色門檻、紅色門檻、開機自動啟動、保留天數。驗證規則：1 ≤ 橘色 < 紅色 ≤ 100；保留天數 1～3650。
 - 深淺色（F-61）：自備淺色與深色兩組 `ResourceDictionary`，依 `HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize` 的 `AppsUseLightTheme` 切換，並監聽 `SystemEvents.UserPreferenceChanged`。不使用 WPF 仍在實驗階段的 `ThemeMode`。
 - 「複製報告」（F-12）使用 `ReportFormatter` 的文字摘要。
@@ -176,6 +179,8 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 ### 3.9 資料檔（F-34、F-52）
 
 所在位置：`MemSweep.exe` 所在資料夾下的 `data\`，不存在時自動建立。無法寫入時，小面板顯示「data 資料夾無法寫入，尖峰紀錄已停用」，其他功能照常。
+
+既有的紀錄檔無法讀取或格式不符時（例如在 Excel 另存成其他編碼），同樣停用尖峰紀錄，小面板顯示「peaks-daily.csv 無法讀取，尖峰紀錄已停用」（依實際檔名），而且不覆寫該檔。停用時仍在記憶體中追蹤，小面板與完整視窗照常顯示本次執行期間的尖峰。
 
 `settings.json`：
 
@@ -199,6 +204,7 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 
 - 時間格式為本機時間 `yyyy-MM-dd HH:mm:ss`；未知時填「未知」。
 - 寫入時機：尖峰有變動就標記，最多每 60 秒寫一次，正常結束時再寫一次。先寫暫存檔再取代原檔，異常結束最多遺失 60 秒內的更新。
+- 寫入失敗（例如 Excel 開著檔案）時不顯示警告，保留變動，到下一個寫入時機再試。
 - 保留天數清理：啟動時與跨日時執行，刪除尖峰時間（或日期）早於保留天數的列（F-33）。
 
 ### 3.10 尖峰追蹤（F-30～F-32）
@@ -208,6 +214,7 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
   - MemSweep 啟動時，如果 Windows 的尖峰高於這次開機已有的紀錄（或還沒有紀錄），代表尖峰發生在 MemSweep 未執行期間，發生時間與前五名都記為「未知」（F-31）。
 - **每日尖峰**：只看取樣到的 commit 已用；跨過本機午夜就開新的一筆（F-32）。
 - Windows 的「快速啟動」會讓「關機再開機」沿用同一次開機，所以一筆開機尖峰可能跨好幾天。介面一律顯示開機時間，方便辨認。
+- MemSweep 在同一次開機或同一天內重新啟動時，接續 CSV 裡的紀錄：開機時間相差 60 秒以內視為同一次開機；Windows 的尖峰比紀錄高出不到 0.005 GB（CSV 兩位小數的一半）視為同一個尖峰，沿用發生時間與前五名。
 
 ### 3.11 命令列（F-40～F-43）
 
@@ -273,7 +280,7 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 | --- | --- | --- | --- |
 | 01 核心與命令列 | `phase-01-core-cli` | 建立 `app/` 方案與共用設定、更新 `.gitignore`；Core 的 `SystemReader`、`ProcessInfoCache`、`AppGrouper`、`ReportFormatter`、`HeadroomCheck`；`memsweep-cli` 三種指令；單元、即時與 A-07 測試；確定建置與測試指令並寫入 AGENTS.md | F-40～F-43、第 8 章、A-01、A-02、A-04、A-06、A-07、A-09 |
 | 02 系統匣與小面板 | `phase-02-tray-flyout` | MemSweep.Desktop：軟體繪圖、數字圖示與提示、右鍵選單（開啟小面板、結束）、小面板、複製報告、單一執行個體、深淺色；`PeakTracker`（只在記憶體中，供小面板顯示開機尖峰）；門檻先用預設值 | F-01～F-07（選單部分）、F-10～F-12（不含「完整清單…」）、F-31、F-60、F-61、A-03、A-08 |
-| 03 尖峰紀錄與完整視窗 | `phase-03-peaks-window` | `PeakStore` 與 CSV、寫入節流、保留天數清理（先用預設 90 天）；完整視窗三個分頁；選單與小面板加「完整清單…」 | F-20～F-24、F-30～F-34、F-52（尖峰紀錄部分）、A-03、A-05 |
+| 03 尖峰紀錄與完整視窗 | `phase-03-peaks-window` | `PeakStore` 與 CSV、寫入節流、保留天數清理（先用預設 90 天）；完整視窗三個分頁；選單與小面板加「完整清單…」；程式圖示與自訂標題列 | F-20～F-24、F-30～F-34、F-52（尖峰紀錄部分）、F-62、A-03、A-05 |
 | 04 設定與發佈 | `phase-04-settings-release` | `SettingsStore` 與設定視窗、門檻與保留天數改讀設定、開機自動啟動、選單加「設定…」；發佈指令與 README 使用說明；完整驗收 A-01～A-09 | F-50～F-52、F-07（設定）、A-01～A-09 |
 
 Phase 01 完成後，Claude 就能先用 `memsweep-cli check` 檢查剩餘 commit，不必等常駐程式完成。
@@ -282,7 +289,7 @@ Phase 01 完成後，Claude 就能先用 `memsweep-cli check` 檢查剩餘 commi
 
 1. **公司名稱判斷不如預期**：Claude 桌面版與工作階段的執行檔公司名稱如果不同或缺漏，A-09 第三個範例會失敗。Phase 01 用實機快照驗證；不符時改用其他判斷方式（例如安裝根目錄），並先回報再修改本文件。2026-10-26 已驗證：兩者是 `Anthropic` 與 `Anthropic PBC`，已改為比對第一個單字（3.3）。
 2. **行程 commit 的口徑**：`PagefileUsage` 若與工作管理員「認可大小」不一致，A-02 會失敗。Phase 01 驗證。2026-10-26 已驗證：546 個行程的 `PagefileUsage` 與私有 commit 完全一致。
-3. **介面記憶體超標**：1.1 的 77 MB 是空白清單的量測值。Phase 02、03 結束時都量 A-03；超過 100 MB 時先回報，再討論對策（例如完整視窗關閉時真正釋放，或改用 WinForms）。Phase 02 原型實測：開過小面板後約 80 MB，餘裕約 20 MB。
+3. **介面記憶體超標**：1.1 的 77 MB 是空白清單的量測值。Phase 02、03 結束時都量 A-03；超過 100 MB 時先回報，再討論對策（例如完整視窗關閉時真正釋放，或改用 WinForms）。Phase 02 原型實測：開過小面板後約 80 MB，餘裕約 20 MB。Phase 03 原型實測：完整視窗開著時約 95～105 MB，隱藏後仍約 109 MB；使用者選擇關閉時真正釋放（3.6），關閉後約 86 MB。另試過的 GC 設定：`System.GC.ConserveMemory` 與 `System.GC.RegionSize` 效果不明顯；`System.GC.Gen0MaxBudget` 設為 4 MB 時開著視窗約省 10 MB，但官方文件沒有列出這個設定，沒有採用，留作之後的備案。
 4. **清單不完整**：殼層、系統與輔助行程清單漏列時，歸組會出錯。依實測調整（R-7），調整時同步更新 3.3。
 
 ## 7. 對 SPEC 的解讀與補充
