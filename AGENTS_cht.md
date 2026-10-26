@@ -21,7 +21,7 @@ Change the marker to `CodeLab-Governance: required` when failed managed-mode ver
 
 MemSweep 是 Windows 記憶體（RAM）工具。功能範圍、功能清單與技術選型尚未決定，將在 SPEC 與 Design 文件中定義；Design 核准後，本檔會補上技術選型、指令與目錄版面。
 
-- 遠端：`https://github.com/AxeenWang/memsweep.git`
+- 遠端：`https://github.com/AxeenWang/MemSweep.git`
 - 預設分支：`main`
 
 ## 語言

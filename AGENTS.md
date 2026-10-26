@@ -19,7 +19,7 @@ Change the marker to `CodeLab-Governance: required` when failed managed-mode ver
 
 MemSweep is a Windows memory (RAM) utility. Its scope, features, and technology stack are not decided yet. They will be defined in the SPEC and Design documents, and this file will gain the stack, commands, and layout once the Design is approved.
 
-- Remote: `https://github.com/AxeenWang/memsweep.git`
+- Remote: `https://github.com/AxeenWang/MemSweep.git`
 - Default branch: `main`
 
 ## Language
