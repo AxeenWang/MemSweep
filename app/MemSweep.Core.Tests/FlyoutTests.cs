@@ -1,35 +1,16 @@
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using MemSweep.Core;
 using MemSweep.Desktop;
 
 namespace MemSweep.Core.Tests;
 
+// 多個 STA 執行緒同時初始化 WPF 介面元件時會互相鎖死，介面測試一律依序執行
 [TestClass]
+[DoNotParallelize]
 public sealed class FlyoutTests
 {
-    private static IEnumerable<DependencyObject> Descendants(DependencyObject root)
-    {
-        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
-        {
-            var child = VisualTreeHelper.GetChild(root, i);
-            yield return child;
-            foreach (var nested in Descendants(child))
-            {
-                yield return nested;
-            }
-        }
-    }
-
-    private static FlyoutPanel LaidOutPanel(PanelModel model)
-    {
-        var panel = new FlyoutPanel { DataContext = model };
-        panel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        panel.Arrange(new Rect(panel.DesiredSize));
-        panel.UpdateLayout();
-        return panel;
-    }
+    private static FlyoutPanel LaidOutPanel(PanelModel model) => WpfLayout.LaidOut(new FlyoutPanel { DataContext = model });
 
     [TestMethod]
     public void PlacesTheFlyoutAtTheBottomRightOfTheWorkArea()
@@ -65,7 +46,7 @@ public sealed class FlyoutTests
             [new PeakApp("Claude", 1)]);
         var panel = LaidOutPanel(PanelModel.Build(ReportSamples.Typical(), peak, UsageThresholds.Default));
 
-        var texts = Descendants(panel).OfType<TextBlock>().Select(t => t.Text).ToList();
+        var texts = WpfLayout.Descendants(panel).OfType<TextBlock>().Select(t => t.Text).ToList();
         CollectionAssert.IsSubsetOf(
             new[]
             {
@@ -81,8 +62,8 @@ public sealed class FlyoutTests
                 "6.9 GB",
             },
             texts);
-        var buttons = Descendants(panel).OfType<Button>().Select(b => b.Content as string).ToList();
-        CollectionAssert.AreEqual(new[] { "複製報告", "結束 MemSweep" }, buttons);
+        var buttons = WpfLayout.Descendants(panel).OfType<Button>().Select(b => b.Content as string).ToList();
+        CollectionAssert.AreEqual(new[] { "完整清單…", "複製報告", "結束 MemSweep" }, buttons);
     }
 
     [STATestMethod]
@@ -92,9 +73,9 @@ public sealed class FlyoutTests
         var withWarning = LaidOutPanel(PanelModel.Build(ReportSamples.Typical(), null, UsageThresholds.Default, warning));
         var withoutWarning = LaidOutPanel(PanelModel.Build(ReportSamples.Typical(), null, UsageThresholds.Default));
 
-        Assert.AreEqual(Visibility.Visible, withWarning.WarningText.Visibility);
-        Assert.AreEqual(warning, withWarning.WarningText.Text);
-        Assert.AreEqual(Visibility.Collapsed, withoutWarning.WarningText.Visibility);
+        Assert.AreEqual(Visibility.Visible, withWarning.Summary.WarningText.Visibility);
+        Assert.AreEqual(warning, withWarning.Summary.WarningText.Text);
+        Assert.AreEqual(Visibility.Collapsed, withoutWarning.Summary.WarningText.Visibility);
     }
 
     [STATestMethod]
@@ -102,7 +83,7 @@ public sealed class FlyoutTests
     {
         var panel = LaidOutPanel(PanelModel.Build(ReportSamples.Typical(), null, UsageThresholds.Default));
 
-        var rows = Descendants(panel).OfType<ContentPresenter>().Where(c => c.Content is PanelRow).ToList();
+        var rows = WpfLayout.Descendants(panel).OfType<ContentPresenter>().Where(c => c.Content is PanelRow).ToList();
 
         Assert.HasCount(6, rows);
     }
