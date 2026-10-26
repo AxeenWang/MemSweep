@@ -8,6 +8,7 @@ internal static unsafe partial class Ntdll
     public const int SystemTimeOfDayInformation = 3;
     public const int SystemProcessInformation = 5;
     public const int SystemPageFileInformation = 18;
+    public const int ProcessCommandLineInformation = 60;
     public const int StatusInfoLengthMismatch = unchecked((int)0xC0000004);
 
     [LibraryImport("ntdll.dll")]
@@ -15,6 +16,14 @@ internal static unsafe partial class Ntdll
         int systemInformationClass,
         void* systemInformation,
         uint systemInformationLength,
+        out uint returnLength);
+
+    [LibraryImport("ntdll.dll")]
+    public static partial int NtQueryInformationProcess(
+        nint processHandle,
+        int processInformationClass,
+        void* processInformation,
+        uint processInformationLength,
         out uint returnLength);
 }
 
