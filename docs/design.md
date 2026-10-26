@@ -2,7 +2,7 @@
 
 > 狀態：已核准（2026-10-26）
 > 日期：2026-10-26
-> 修訂：2026-10-26 依 Phase 01 實測修訂 1 的 JSON 列、3.3（公司名稱比對方式、殼層與系統清單）、3.11 文字摘要範例與第 6 章風險 1（隨 Phase 01 計畫核准）；2026-10-26 依 Phase 01 整體審查補上 3.3 的孤兒輔助行程規則與輔助行程清單
+> 修訂：2026-10-26 依 Phase 01 實測修訂 1 的 JSON 列、3.3（公司名稱比對方式、殼層與系統清單）、3.11 文字摘要範例與第 6 章風險 1（隨 Phase 01 計畫核准）；2026-10-26 依 Phase 01 整體審查補上 3.3 的孤兒輔助行程規則與輔助行程清單；2026-10-26 隨 Phase 02 計畫修訂 3.3 步驟 6 用字、3.6 小面板的建立時機與位置、3.7 前景許可、3.11 結束碼 3、第 4 章 A-07 清單與第 6 章風險 3
 > 依據：[SPEC](spec.md)（2026-10-26 核准）。條文編號（F-、R-、A-、X-）沿用 SPEC。
 >
 > 標示「〔使用者決定〕」的是使用者在討論中明確選擇的項目，其餘是 Claude 的提案，核准本文件即視為採用。
@@ -132,7 +132,7 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 3. 以最上層行程的執行檔路徑（取不到時用映像名稱）為分組鍵，路徑相同的最上層行程自然合併成一列（R-5）。
 4. 最上層執行檔位於 `%SystemRoot%` 之下，或取不到路徑而名稱在殼層與系統清單中的，全部併入「Windows（系統與服務）」（R-6）。
 5. 名稱取最上層執行檔的檔案描述，取不到時用執行檔名稱（R-4）。
-6. 展開明細（F-23）依執行檔名稱合併計數；node 行程再依命令列取出的套件標籤分開，例如命令列含 `@playwright/mcp` 就標為「node：@playwright/mcp」，取不到時標為「node」。
+6. 展開明細（F-23）依執行檔名稱合併計數；node 行程再依命令列取出的套件標籤分開，例如命令列含 `@playwright/mcp` 就標為「node：@playwright/mcp」，取不到時維持執行檔名稱「node.exe」。
 
 **實測**（2026-10-26）：Claude 桌面版的公司名稱是 `Anthropic`，工作階段（Claude Code）是 `Anthropic PBC`。原本「完整名稱相同」的判斷會把工作階段拆出去，因此改比第一個單字。`Idle`、`Secure System`、`Memory Compression` 沒有執行檔路徑，加進殼層與系統清單後，才會依 R-6 併入「Windows（系統與服務）」。
 
@@ -153,7 +153,8 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 ### 3.6 視窗
 
 - `App.OnStartup` 在建立任何視窗前設定 `RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly`。
-- 小面板（F-10～F-12）：無邊框、不顯示在工作列、最上層；出現在點擊位置所在螢幕工作區的右下角；失去焦點時隱藏。視窗只建立一次，之後以顯示／隱藏切換（量測顯示關閉視窗也不會釋放記憶體，隱藏可讓重開更快）。
+- 小面板（F-10～F-12）：無邊框、不顯示在工作列、最上層；出現在主螢幕工作區的右下角（Windows 11 的通知區域固定在主螢幕底部的工作列）；失去焦點或按 Esc 時隱藏。視窗在第一次開啟時才建立，之後以顯示／隱藏切換（量測顯示關閉視窗也不會釋放記憶體，隱藏可讓重開更快）。Phase 02 實測：只掛在系統匣時行程約 18 MB，若啟動時就建立小面板約 58 MB，開過小面板後約 80 MB。
+- 小面板開著時點系統匣圖示，焦點會先移走讓小面板隱藏；隱藏後 400 毫秒內的同一次點擊不再把它打開，所以點圖示可以開關小面板。
 - 完整視窗（F-20～F-24）：一般視窗，關閉時改為隱藏。三個分頁；「程式」分頁是可展開的表格，具體用哪種控制項由 Phase 03 計畫決定。
 - 設定視窗（F-50）：橘色門檻、紅色門檻、開機自動啟動、保留天數。驗證規則：1 ≤ 橘色 < 紅色 ≤ 100；保留天數 1～3650。
 - 深淺色（F-61）：自備淺色與深色兩組 `ResourceDictionary`，依 `HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize` 的 `AppsUseLightTheme` 切換，並監聽 `SystemEvents.UserPreferenceChanged`。不使用 WPF 仍在實驗階段的 `ThemeMode`。
@@ -163,6 +164,7 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 
 - 以具名 Mutex `Local\MemSweep.SingleInstance` 判斷是否已有執行個體。
 - 第二個執行個體設定具名事件 `Local\MemSweep.ShowPanel` 後立即結束；第一個執行個體收到事件就顯示小面板。
+- 第二個執行個體是使用者剛啟動的前景行程，設定事件前先呼叫 `AllowSetForegroundWindow(ASFW_ANY)` 把前景許可讓出，第一個執行個體的小面板才拿得到焦點。
 
 ### 3.8 開機自動啟動（F-51）
 
@@ -215,6 +217,7 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 | `memsweep-cli check --need <GB>` | 剩餘 commit ≥ 指定值時結束碼 0；不足時結束碼 1，並輸出剩餘量與前五名 |
 | 無參數、`--help` | 用法說明，結束碼 0 |
 | 參數錯誤 | 錯誤訊息與用法，結束碼 2 |
+| 無法取得系統記憶體資訊 | 錯誤訊息寫到 stderr，不印堆疊，結束碼 3 |
 
 - `<GB>` 可帶小數，必須大於 0。全工具的 1 GB 都是 1024³ bytes，與工作管理員一致。
 - 輸出使用 UTF-8。
@@ -257,7 +260,7 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
   - `SettingsStore`：預設值、不合法內容、門檻驗證。
   - `ReportFormatter`、`HeadroomCheck`（A-04）、命令列參數解析。
 - **即時系統測試**（標記 `Live` 類別，唯讀）：`SystemReader` 取得的數值合理；commit 已用與 `Win32_OperatingSystem` 的數值相差在容許範圍內，作為 A-01 的自動化替代。
-- **A-07 自動檢查**：以反射列出 Core、Desktop、Cli 組件中所有 P/Invoke 進入點，確認沒有 `EmptyWorkingSet`、`SetProcessWorkingSetSize`、`SetProcessWorkingSetSizeEx`、`NtSetSystemInformation`、`SetSystemFileCacheSize`、`AdjustTokenPrivileges`。
+- **A-07 自動檢查**：以反射列出 Core、Desktop、Cli 組件中所有 P/Invoke 進入點，確認沒有 `EmptyWorkingSet`、`SetProcessWorkingSetSize`、`SetProcessWorkingSetSizeEx`、`NtSetSystemInformation`、`SetSystemFileCacheSize`、`AdjustTokenPrivileges`、`TerminateProcess`、`NtTerminateProcess`、`NtSetInformationProcess`、`VirtualFreeEx`。這項檢查只涵蓋以 `DllImport`／`LibraryImport` 宣告的呼叫。
 - **人工驗收**（各 Phase 結束時）：A-01 對照工作管理員、A-02、A-03 常駐 1 小時量測、A-05 以 Excel 開啟、A-06、A-08。
 - 任何測試都不得改變系統記憶體狀態或實際寫入開機啟動登錄（AGENTS.md「System Safety」）。
 
@@ -278,7 +281,7 @@ Phase 01 完成後，Claude 就能先用 `memsweep-cli check` 檢查剩餘 commi
 
 1. **公司名稱判斷不如預期**：Claude 桌面版與工作階段的執行檔公司名稱如果不同或缺漏，A-09 第三個範例會失敗。Phase 01 用實機快照驗證；不符時改用其他判斷方式（例如安裝根目錄），並先回報再修改本文件。2026-10-26 已驗證：兩者是 `Anthropic` 與 `Anthropic PBC`，已改為比對第一個單字（3.3）。
 2. **行程 commit 的口徑**：`PagefileUsage` 若與工作管理員「認可大小」不一致，A-02 會失敗。Phase 01 驗證。2026-10-26 已驗證：546 個行程的 `PagefileUsage` 與私有 commit 完全一致。
-3. **介面記憶體超標**：1.1 的 77 MB 是空白清單的量測值。Phase 02、03 結束時都量 A-03；超過 100 MB 時先回報，再討論對策（例如完整視窗關閉時真正釋放，或改用 WinForms）。
+3. **介面記憶體超標**：1.1 的 77 MB 是空白清單的量測值。Phase 02、03 結束時都量 A-03；超過 100 MB 時先回報，再討論對策（例如完整視窗關閉時真正釋放，或改用 WinForms）。Phase 02 原型實測：開過小面板後約 80 MB，餘裕約 20 MB。
 4. **清單不完整**：殼層、系統與輔助行程清單漏列時，歸組會出錯。依實測調整（R-7），調整時同步更新 3.3。
 
 ## 7. 對 SPEC 的解讀與補充
