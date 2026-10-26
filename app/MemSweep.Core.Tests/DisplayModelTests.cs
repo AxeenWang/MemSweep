@@ -109,6 +109,16 @@ public sealed class DisplayModelTests
     }
 
     [TestMethod]
+    public void PanelCarriesTheStorageWarning()
+    {
+        var withWarning = PanelModel.Build(ReportSamples.Typical(), null, UsageThresholds.Default, "data 資料夾無法寫入，尖峰紀錄已停用");
+        var withoutWarning = PanelModel.Build(ReportSamples.Typical(), null, UsageThresholds.Default);
+
+        Assert.AreEqual("data 資料夾無法寫入，尖峰紀錄已停用", withWarning.Warning);
+        Assert.IsNull(withoutWarning.Warning);
+    }
+
+    [TestMethod]
     public void PeakTextBeforeTheFirstPeak()
     {
         var panel = PanelModel.Build(ReportSamples.Typical(), null, UsageThresholds.Default);

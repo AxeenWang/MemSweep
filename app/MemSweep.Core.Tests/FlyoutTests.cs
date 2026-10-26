@@ -86,6 +86,18 @@ public sealed class FlyoutTests
     }
 
     [STATestMethod]
+    public void PanelShowsTheStorageWarningOnlyWhenThereIsOne()
+    {
+        const string warning = "peaks-daily.csv 無法讀取，尖峰紀錄已停用";
+        var withWarning = LaidOutPanel(PanelModel.Build(ReportSamples.Typical(), null, UsageThresholds.Default, warning));
+        var withoutWarning = LaidOutPanel(PanelModel.Build(ReportSamples.Typical(), null, UsageThresholds.Default));
+
+        Assert.AreEqual(Visibility.Visible, withWarning.WarningText.Visibility);
+        Assert.AreEqual(warning, withWarning.WarningText.Text);
+        Assert.AreEqual(Visibility.Collapsed, withoutWarning.WarningText.Visibility);
+    }
+
+    [STATestMethod]
     public void PanelListsTopFivePlusUnattributed()
     {
         var panel = LaidOutPanel(PanelModel.Build(ReportSamples.Typical(), null, UsageThresholds.Default));

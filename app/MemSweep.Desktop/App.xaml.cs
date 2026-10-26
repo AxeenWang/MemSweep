@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -12,6 +13,7 @@ public partial class App : Application
     private ThemeWatcher? _theme;
     private TrayController? _tray;
     private CancellationTokenSource? _sampling;
+    private PeakRecorder? _peaks;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -36,6 +38,9 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _sampling?.Cancel();
+        _sampling?.Dispose();
+        // 還沒寫入的尖峰變動在結束前寫入（Design 3.9）
+        _peaks?.Flush();
         _tray?.Dispose();
         _theme?.Dispose();
         _instance?.Dispose();
@@ -44,20 +49,24 @@ public partial class App : Application
 
     private void StartSampling()
     {
-        // MemorySampler 與 PeakTracker 只在取樣迴圈裡依序使用，不會同時被兩個執行緒存取
+        // 設定與尖峰紀錄放在 exe 所在資料夾下的 data\（F-52）
+        var opening = PeakStore.Open(Path.Combine(AppContext.BaseDirectory, "data"), TimeZoneInfo.Local);
+        var peaks = new PeakRecorder(opening, PeakStore.DefaultRetentionDays);
+        _peaks = peaks;
+
+        // MemorySampler 只在取樣迴圈裡使用；PeakRecorder 另外會在結束時由 UI 執行緒呼叫，自己有 lock
         var sampler = MemorySampler.CreateDefault();
-        var tracker = new PeakTracker();
         var loop = new SamplingLoop(
             () =>
             {
                 var grouped = sampler.Sample();
-                tracker.Update(grouped);
+                peaks.Record(grouped);
                 return grouped;
             },
             grouped =>
             {
-                var peak = tracker.BootPeak;
-                Dispatcher.InvokeAsync(() => _tray?.Update(grouped, peak));
+                var state = peaks.State;
+                Dispatcher.InvokeAsync(() => _tray?.Update(grouped, state));
             },
             SamplingLoop.DefaultPeriod);
 

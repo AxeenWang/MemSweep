@@ -88,6 +88,23 @@
 
       <TextBlock Text="{Binding PeakText}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,8" />
 
+      <!-- 尖峰紀錄停用的原因（Design 3.9），沒有問題時不顯示 -->
+      <TextBlock x:Name="WarningText"
+                 Text="{Binding Warning}"
+                 Foreground="{DynamicResource OrangeBrush}"
+                 TextWrapping="Wrap"
+                 Margin="0,0,0,8">
+        <TextBlock.Style>
+          <Style TargetType="TextBlock">
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding Warning}" Value="{x:Null}">
+                <Setter Property="Visibility" Value="Collapsed" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </TextBlock.Style>
+      </TextBlock>
+
       <!-- 前五名與「系統（不屬於任何程式）」 -->
       <ItemsControl ItemsSource="{Binding Rows}">
         <ItemsControl.ItemTemplate>

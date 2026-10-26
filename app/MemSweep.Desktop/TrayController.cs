@@ -13,7 +13,7 @@ internal sealed class TrayController : IDisposable
     private Icon? _icon;
     private string? _iconKey;
     private GroupedSnapshot? _latest;
-    private BootPeak? _latestPeak;
+    private PeakState? _latestPeaks;
 
     public TrayController()
     {
@@ -42,11 +42,11 @@ internal sealed class TrayController : IDisposable
             return;
         }
         var flyout = EnsureFlyout();
-        flyout.PanelView.DataContext = PanelModel.Build(_latest, _latestPeak, UsageThresholds.Default);
+        flyout.PanelView.DataContext = BuildPanel();
         flyout.ShowPanel();
     }
 
-    public void Update(GroupedSnapshot grouped, BootPeak? peak)
+    public void Update(GroupedSnapshot grouped, PeakState peaks)
     {
         var snapshot = grouped.Snapshot;
         string text = TrayText.IconText(snapshot);
@@ -67,10 +67,10 @@ internal sealed class TrayController : IDisposable
         _notifyIcon.Text = TrayText.Tooltip(snapshot);
         _notifyIcon.Visible = true;
         _latest = grouped;
-        _latestPeak = peak;
+        _latestPeaks = peaks;
         if (_flyout is { IsVisible: true })
         {
-            _flyout.PanelView.DataContext = PanelModel.Build(grouped, peak, UsageThresholds.Default);
+            _flyout.PanelView.DataContext = BuildPanel();
         }
     }
 
@@ -82,6 +82,9 @@ internal sealed class TrayController : IDisposable
         _notifyIcon.Dispose();
         _icon?.Dispose();
     }
+
+    private PanelModel BuildPanel() =>
+        PanelModel.Build(_latest!, _latestPeaks?.BootPeak, UsageThresholds.Default, _latestPeaks?.StorageWarning);
 
     // 第一次開啟時才建立，之後只顯示／隱藏：只用系統匣時，行程不必載入 WPF 視窗（約省 40 MB）
     private FlyoutWindow EnsureFlyout()
