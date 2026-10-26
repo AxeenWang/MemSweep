@@ -45,7 +45,7 @@ internal sealed class ThemeWatcher : IDisposable
         // 這個事件在 SystemEvents 自己的執行緒上觸發
         if (e.Category == UserPreferenceCategory.General)
         {
-            Application.Current?.Dispatcher.InvokeAsync(Apply);
+            Application.Current?.Dispatcher.BeginInvoke(new Action(Apply));
         }
     }
 

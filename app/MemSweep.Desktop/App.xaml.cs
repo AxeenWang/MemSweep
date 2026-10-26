@@ -31,7 +31,8 @@ public partial class App : Application
         _theme = new ThemeWatcher(Resources);
         _tray = new TrayController();
         _tray.ExitRequested += () => Shutdown();
-        _instance.ShowRequested += () => Dispatcher.InvokeAsync(() => _tray?.ShowFlyout());
+        // UI 執行緒的工作一律用 BeginInvoke，例外才不會像 InvokeAsync 那樣消失（Design 3.4）
+        _instance.ShowRequested += () => Dispatcher.BeginInvoke(new Action(() => _tray?.ShowFlyout()));
         StartSampling();
     }
 
@@ -66,7 +67,7 @@ public partial class App : Application
             grouped =>
             {
                 var state = peaks.State;
-                Dispatcher.InvokeAsync(() => _tray?.Update(grouped, state));
+                Dispatcher.BeginInvoke(new Action(() => _tray?.Update(grouped, state)));
             },
             SamplingLoop.DefaultPeriod);
 
