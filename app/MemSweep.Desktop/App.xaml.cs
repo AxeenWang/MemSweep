@@ -64,7 +64,7 @@ public partial class App : Application
         _sampling = new CancellationTokenSource();
         var token = _sampling.Token;
         Task.Run(() => loop.RunAsync(token)).ContinueWith(
-            task => Dispatcher.InvokeAsync(() => throw new InvalidOperationException("取樣迴圈意外結束", task.Exception)),
+            task => SamplingFailure.Raise(Dispatcher, task.Exception),
             TaskContinuationOptions.OnlyOnFaulted);
     }
 }
