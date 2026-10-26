@@ -2,6 +2,7 @@
 
 > 狀態：已核准（2026-10-26）
 > 日期：2026-10-26
+> 修訂：2026-10-26 依 Phase 01 實測修訂 1 的 JSON 列、3.3（公司名稱比對方式、殼層與系統清單）、3.11 文字摘要範例與第 6 章風險 1（隨 Phase 01 計畫核准）
 > 依據：[SPEC](spec.md)（2026-10-26 核准）。條文編號（F-、R-、A-、X-）沿用 SPEC。
 >
 > 標示「〔使用者決定〕」的是使用者在討論中明確選擇的項目，其餘是 Claude 的提案，核准本文件即視為採用。
@@ -14,7 +15,7 @@
 | 介面 | WPF，整個行程固定使用軟體繪圖 | 〔使用者決定〕依 1.1 的量測選定 |
 | 系統匣 | .NET 內建的 WinForms `NotifyIcon`（專案同時開 `UseWPF`、`UseWindowsForms`） | 不需第三方套件 |
 | Win32 呼叫 | `LibraryImport`（專案需開 `AllowUnsafeBlocks`） | 編譯時產生封送程式碼，與裁剪相容 |
-| JSON | `System.Text.Json` 原始碼產生 | .NET 內建 |
+| JSON | `System.Text.Json`：報告以 `Utf8JsonWriter` 逐欄寫出，設定檔用原始碼產生 | .NET 內建 |
 | CSV | 自行撰寫的簡單寫入與讀取 | 欄位固定，不值得引入套件 |
 | 命令列參數 | 自行解析 | 只有三種指令，不引入 `System.CommandLine` |
 | 測試 | MSTest（`MSTest.Sdk`） | 微軟官方，只在開發時使用 |
@@ -110,17 +111,18 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 
 **清單**（R-7，實作時可依實測調整）：
 
-- 殼層與系統行程（往上追到它們就停止）：`System`、`Registry`、`smss.exe`、`csrss.exe`、`wininit.exe`、`winlogon.exe`、`services.exe`、`svchost.exe`、`userinit.exe`、`explorer.exe`、`sihost.exe`。
+- 殼層與系統行程（往上追到它們就停止）：`Idle`、`System`、`Secure System`、`Registry`、`Memory Compression`、`smss.exe`、`csrss.exe`、`wininit.exe`、`winlogon.exe`、`services.exe`、`svchost.exe`、`userinit.exe`、`explorer.exe`、`sihost.exe`。
 - 輔助行程（R-2，一律歸屬啟動者）：`cmd.exe`、`conhost.exe`、`OpenConsole.exe`、`pwsh.exe`、`powershell.exe`、`node.exe`、`bun.exe`、`python.exe`、`pythonw.exe`、`uv.exe`、`uvx.exe`、`msedgewebview2.exe`。
 
-**「獨立應用程式」的判斷**（R-1 第三點）：行程不是輔助行程，而且它和父行程的執行檔公司名稱（`FileVersionInfo.CompanyName`，去頭尾空白、不分大小寫）不同，或任一方取不到公司名稱。
+**「獨立應用程式」的判斷**（R-1 第三點）：行程不是輔助行程，而且它和父行程的執行檔公司名稱（`FileVersionInfo.CompanyName`）第一個單字不同，或任一方取不到公司名稱。第一個單字是去頭尾空白後，開頭連續的字母或數字，比較時不分大小寫。
 
 | 範例 | 判斷結果 |
 | --- | --- |
-| Steam（Valve）啟動的遊戲 | 公司不同，遊戲自成一列 |
-| 終端機（Microsoft）裡的 pwsh（輔助）啟動的 Claude Code（Anthropic） | 自成一列 |
+| Steam（Valve Corporation）啟動的遊戲 | 第一個單字不同，遊戲自成一列 |
+| 終端機（Microsoft Corporation）裡的 pwsh（輔助）啟動的 Claude Code（Anthropic PBC） | 自成一列 |
 | IDE 偵錯啟動、沒有公司名稱的修改器 | 取不到公司，自成一列 |
-| Claude 桌面版（Anthropic）啟動的工作階段（Anthropic） | 公司相同，併入 Claude |
+| Codex 桌面版（OpenAI OpCo, LLC）啟動、沒有公司名稱的 `codex.exe` | 取不到公司，自成一列〔使用者決定〕 |
+| Claude 桌面版（Anthropic）啟動的工作階段（Anthropic PBC） | 第一個單字相同，併入 Claude |
 | Claude 工作階段啟動的 node MCP | 輔助行程，併入 Claude |
 
 **步驟**：
@@ -132,7 +134,7 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 5. 名稱取最上層執行檔的檔案描述，取不到時用執行檔名稱（R-4）。
 6. 展開明細（F-23）依執行檔名稱合併計數；node 行程再依命令列取出的套件標籤分開，例如命令列含 `@playwright/mcp` 就標為「node：@playwright/mcp」，取不到時標為「node」。
 
-**風險**：Claude 桌面版與工作階段執行檔的公司名稱是否都是「Anthropic」尚未實測，見第 6 章風險 1。
+**實測**（2026-10-26）：Claude 桌面版的公司名稱是 `Anthropic`，工作階段（Claude Code）是 `Anthropic PBC`。原本「完整名稱相同」的判斷會把工作階段拆出去，因此改比第一個單字。`Idle`、`Secure System`、`Memory Compression` 沒有執行檔路徑，加進殼層與系統清單後，才會依 R-6 併入「Windows（系統與服務）」。
 
 ### 3.4 取樣（MemSweep.Desktop）
 
@@ -222,11 +224,13 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
   RAM     20.5 / 31.4 GB（65%）
   尖峰    36.8 GB（開機以來）
   前五名
-    Claude                 36 個行程  3.2 GB
-    ChatGPT                13 個行程  2.2 GB
+    Claude  36 個行程  3.2 GB
+    ChatGPT  13 個行程  2.2 GB
     …
-  系統（不屬於任何程式）              6.9 GB
+  系統（不屬於任何程式）  6.9 GB
   ```
+
+  中文字在終端機裡佔兩格，對不齊欄位，所以名稱與數字之間固定隔兩個空格，不做欄位對齊。
 
 - JSON 內容與文字摘要相同（前五名，不是全部應用程式），記憶體以 bytes 整數表示：
 
@@ -270,8 +274,8 @@ Phase 01 完成後，Claude 就能先用 `memsweep-cli check` 檢查剩餘 commi
 
 ## 6. 風險與驗證
 
-1. **公司名稱判斷不如預期**：Claude 桌面版與工作階段的執行檔公司名稱如果不同或缺漏，A-09 第三個範例會失敗。Phase 01 用實機快照驗證；不符時改用其他判斷方式（例如安裝根目錄），並先回報再修改本文件。
-2. **行程 commit 的口徑**：`PagefileUsage` 若與工作管理員「認可大小」不一致，A-02 會失敗。Phase 01 驗證。
+1. **公司名稱判斷不如預期**：Claude 桌面版與工作階段的執行檔公司名稱如果不同或缺漏，A-09 第三個範例會失敗。Phase 01 用實機快照驗證；不符時改用其他判斷方式（例如安裝根目錄），並先回報再修改本文件。2026-10-26 已驗證：兩者是 `Anthropic` 與 `Anthropic PBC`，已改為比對第一個單字（3.3）。
+2. **行程 commit 的口徑**：`PagefileUsage` 若與工作管理員「認可大小」不一致，A-02 會失敗。Phase 01 驗證。2026-10-26 已驗證：546 個行程的 `PagefileUsage` 與私有 commit 完全一致。
 3. **介面記憶體超標**：1.1 的 77 MB 是空白清單的量測值。Phase 02、03 結束時都量 A-03；超過 100 MB 時先回報，再討論對策（例如完整視窗關閉時真正釋放，或改用 WinForms）。
 4. **清單不完整**：殼層、系統與輔助行程清單漏列時，歸組會出錯。依實測調整（R-7），調整時同步更新 3.3。
 
