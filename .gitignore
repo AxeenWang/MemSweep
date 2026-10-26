@@ -1,0 +1,9 @@
+# CodeLab agent areas: temp, persistent tools, user references
+/.agent_tools/
+/.camp_codex/
+/.camp_claude/
+/.camp_references/
+
+# Personal agent settings
+/CLAUDE.local.md
+/.claude/settings.local.json
