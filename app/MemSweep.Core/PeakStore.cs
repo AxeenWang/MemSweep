@@ -89,7 +89,12 @@ public sealed class PeakStore : IPeakStore
     {
         string path = Path.Combine(_directory, fileName);
         string temp = path + ".tmp";
-        File.WriteAllBytes(temp, content);
+        using (var stream = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.Read))
+        {
+            stream.Write(content);
+            // 只寫進系統快取就取代原檔的話，斷電或當機後原檔可能整份是 0 而無法讀取，尖峰紀錄就此停用
+            stream.Flush(flushToDisk: true);
+        }
         try
         {
             File.Move(temp, path, overwrite: true);
