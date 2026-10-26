@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>memsweep-cli</AssemblyName>
+    <RootNamespace>MemSweep.Cli</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MemSweep.Core\MemSweep.Core.csproj" />
+  </ItemGroup>
+
+</Project>
