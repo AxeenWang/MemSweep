@@ -7,3 +7,8 @@
 # Personal agent settings
 /CLAUDE.local.md
 /.claude/settings.local.json
+
+# Build output and IDE files
+/app/artifacts/
+.vs/
+*.user
