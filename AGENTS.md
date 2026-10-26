@@ -28,7 +28,9 @@ MemSweep is a read-only Windows commit-charge monitor. A tray app shows commit u
 - Win32 access goes through `LibraryImport` and is limited to read-only queries.
 - No third-party runtime dependencies. MSTest (`MSTest.Sdk`) is the only development-time package.
 - Publish framework-dependent for win-x64, with both exes in one folder.
-- Build, test, and publish commands are added here once Phase 01 confirms them.
+- Run every `dotnet` command inside `app/`, because `app/global.json` pins the SDK, the MSTest.Sdk version, and the test runner. For example: `(cd app && dotnet build)`.
+- Test: `(cd app && dotnet test)`. Unit tests only: `(cd app && dotnet test --filter "TestCategory!=Live")`. Live tests read the real system and are read-only.
+- Publish commands are added in Phase 04.
 
 ## Language
 

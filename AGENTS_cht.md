@@ -30,7 +30,9 @@ MemSweep 是唯讀的 Windows commit 監看工具。系統匣程式顯示 commit
 - Win32 一律透過 `LibraryImport` 呼叫，而且只做唯讀查詢。
 - 執行時期不依賴第三方套件。開發時期唯一的套件是 MSTest（`MSTest.Sdk`）。
 - 以 framework-dependent、win-x64 發佈，兩支 exe 放在同一個資料夾。
-- 建置、測試與發佈指令在 Phase 01 確認後補到這裡。
+- 所有 `dotnet` 指令都在 `app/` 底下執行，因為 `app/global.json` 固定了 SDK、MSTest.Sdk 版本與測試執行器。例如：`(cd app && dotnet build)`。
+- 測試：`(cd app && dotnet test)`。只跑單元測試：`(cd app && dotnet test --filter "TestCategory!=Live")`。即時測試會讀取真實系統，全部是唯讀查詢。
+- 發佈指令在 Phase 04 補上。
 
 ## 語言
 
