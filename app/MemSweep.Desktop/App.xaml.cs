@@ -9,6 +9,7 @@ namespace MemSweep.Desktop;
 public partial class App : Application
 {
     private SingleInstance? _instance;
+    private ThemeWatcher? _theme;
     private TrayController? _tray;
     private CancellationTokenSource? _sampling;
 
@@ -25,8 +26,10 @@ public partial class App : Application
             return;
         }
 
+        _theme = new ThemeWatcher(Resources);
         _tray = new TrayController();
         _tray.ExitRequested += () => Shutdown();
+        _instance.ShowRequested += () => Dispatcher.InvokeAsync(() => _tray?.ShowFlyout());
         StartSampling();
     }
 
@@ -34,6 +37,7 @@ public partial class App : Application
     {
         _sampling?.Cancel();
         _tray?.Dispose();
+        _theme?.Dispose();
         _instance?.Dispose();
         base.OnExit(e);
     }

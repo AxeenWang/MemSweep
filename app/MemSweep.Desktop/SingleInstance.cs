@@ -1,3 +1,5 @@
+using MemSweep.Desktop.Native;
+
 namespace MemSweep.Desktop;
 
 /// <summary>
@@ -36,6 +38,8 @@ public sealed class SingleInstance : IDisposable
             {
                 using (existing)
                 {
+                    // 使用者剛啟動的這個行程在前景，把前景許可讓給第一個執行個體，小面板才拿得到焦點
+                    User32.AllowSetForegroundWindow(User32.AsfwAny);
                     existing.Set();
                 }
             }
