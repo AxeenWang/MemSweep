@@ -7,7 +7,13 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationIcon>Assets\MemSweep.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 同一個圖示也給自訂標題列使用（pack://application:,,,/MemSweep;component/Assets/MemSweep.ico） -->
+    <Resource Include="Assets\MemSweep.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- WPF 與 WinForms 有同名型別（Application 等），WinForms 只在需要的檔案明確 using -->

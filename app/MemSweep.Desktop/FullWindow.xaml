@@ -13,7 +13,68 @@
         Background="{DynamicResource PanelBackgroundBrush}"
         Foreground="{DynamicResource TextBrush}">
   <!-- 完整視窗（F-20、F-21）；DataContext 是 FullWindowModel -->
+  <!-- 自訂標題列（F-62）：系統的標題列換成 TitleBar，拖曳、雙擊最大化、邊緣調整大小與貼齊仍由系統處理 -->
+  <WindowChrome.WindowChrome>
+    <WindowChrome CaptionHeight="32"
+                  ResizeBorderThickness="6"
+                  GlassFrameThickness="0"
+                  CornerRadius="0"
+                  UseAeroCaptionButtons="False" />
+  </WindowChrome.WindowChrome>
+
   <Window.Resources>
+    <!-- 自訂捲軸（只有垂直捲軸）：細的圓角滑塊，深色模式下才不會出現系統預設的淺色捲軸 -->
+    <Style x:Key="ScrollPage" TargetType="RepeatButton">
+      <Setter Property="Focusable" Value="False" />
+      <Setter Property="IsTabStop" Value="False" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RepeatButton">
+            <Border Background="Transparent" />
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="ScrollThumb" TargetType="Thumb">
+      <Setter Property="Background" Value="{DynamicResource ScrollThumbBrush}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Thumb">
+            <Border Margin="2" CornerRadius="3" Background="{TemplateBinding Background}" />
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="{DynamicResource ScrollThumbHoverBrush}" />
+        </Trigger>
+        <Trigger Property="IsDragging" Value="True">
+          <Setter Property="Background" Value="{DynamicResource ScrollThumbHoverBrush}" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+    <Style TargetType="ScrollBar">
+      <Setter Property="Width" Value="10" />
+      <Setter Property="MinWidth" Value="10" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ScrollBar">
+            <Track x:Name="PART_Track" IsDirectionReversed="True">
+              <Track.DecreaseRepeatButton>
+                <RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource ScrollPage}" />
+              </Track.DecreaseRepeatButton>
+              <Track.IncreaseRepeatButton>
+                <RepeatButton Command="ScrollBar.PageDownCommand" Style="{StaticResource ScrollPage}" />
+              </Track.IncreaseRepeatButton>
+              <Track.Thumb>
+                <Thumb Style="{StaticResource ScrollThumb}" />
+              </Track.Thumb>
+            </Track>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
     <!-- 自訂分頁標籤，深色模式下才不會出現系統預設的白色標籤 -->
     <Style TargetType="TabItem">
       <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
@@ -39,20 +100,34 @@
     </Style>
   </Window.Resources>
 
-  <TabControl Margin="12" Padding="0" Background="Transparent" BorderThickness="0">
-    <TabItem Header="總覽">
-      <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="0,12,0,0" MaxWidth="560" HorizontalAlignment="Left">
-          <local:SummaryView DataContext="{Binding Overview}" />
-          <TextBlock Text="{Binding PageFileText}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,8,0,0" />
-        </StackPanel>
-      </ScrollViewer>
-    </TabItem>
-    <TabItem Header="程式">
-      <local:AppsView />
-    </TabItem>
-    <TabItem Header="尖峰紀錄">
-      <local:PeaksView />
-    </TabItem>
-  </TabControl>
+  <Border x:Name="Frame">
+    <Border.Style>
+      <Style TargetType="Border">
+        <Style.Triggers>
+          <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized">
+            <Setter Property="Margin" Value="{x:Static local:TitleBar.MaximizedMargin}" />
+          </DataTrigger>
+        </Style.Triggers>
+      </Style>
+    </Border.Style>
+    <DockPanel>
+      <local:TitleBar x:Name="Caption" DockPanel.Dock="Top" />
+      <TabControl Margin="12,4,12,12" Padding="0" Background="Transparent" BorderThickness="0">
+        <TabItem Header="總覽">
+          <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,12,0,0" Width="480" HorizontalAlignment="Left">
+              <local:SummaryView DataContext="{Binding Overview}" />
+              <TextBlock Text="{Binding PageFileText}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,8,0,0" />
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+        <TabItem Header="程式">
+          <local:AppsView />
+        </TabItem>
+        <TabItem Header="尖峰紀錄">
+          <local:PeaksView />
+        </TabItem>
+      </TabControl>
+    </DockPanel>
+  </Border>
 </Window>

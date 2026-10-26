@@ -32,7 +32,7 @@
   </UserControl.Resources>
 
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-    <StackPanel Margin="0,12,0,0">
+    <StackPanel Margin="0,12,8,0">
       <!-- 欄位：展開、名稱、行程數、commit、實際 RAM（工作集） -->
       <Grid Margin="0,0,0,4">
         <Grid.ColumnDefinitions>
