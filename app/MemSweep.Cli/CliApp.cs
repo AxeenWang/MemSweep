@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Globalization;
 using MemSweep.Core;
 
@@ -9,14 +10,30 @@ public static class CliApp
     public const int ExitOk = 0;
     public const int ExitNotEnough = 1;
     public const int ExitUsageError = 2;
+    public const int ExitSampleError = 3;
 
     public static readonly string Usage =
         "用法：\n" +
         "  memsweep-cli status             顯示 commit、RAM、尖峰與前五名\n" +
         "  memsweep-cli status --json      以 JSON 輸出相同內容\n" +
-        "  memsweep-cli check --need <GB>  剩餘 commit 足夠時結束碼 0，不足時 1\n";
+        "  memsweep-cli check --need <GB>  剩餘 commit 足夠時結束碼 0，不足時 1\n" +
+        "結束碼：參數錯誤為 2，無法取得系統記憶體資訊為 3\n";
 
     public static int Run(string[] args, Func<GroupedSnapshot> sample, TextWriter output, TextWriter error)
+    {
+        try
+        {
+            return RunCommand(args, sample, output, error);
+        }
+        catch (Exception e) when (e is Win32Exception or InvalidOperationException)
+        {
+            // 取樣失敗不印堆疊，讓呼叫端只需要認得固定的結束碼
+            error.Write("錯誤：無法取得系統記憶體資訊：" + e.Message + "\n");
+            return ExitSampleError;
+        }
+    }
+
+    private static int RunCommand(string[] args, Func<GroupedSnapshot> sample, TextWriter output, TextWriter error)
     {
         switch (args)
         {
