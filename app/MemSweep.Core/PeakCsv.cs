@@ -21,8 +21,12 @@ public static class PeakCsv
 
     private const string TimeFormat = "yyyy-MM-dd HH:mm:ss";
     private const string DateFormat = "yyyy-MM-dd";
-    private const int TopCount = 5;
+    // 前五名的欄數與文字摘要的前五名相同
+    private const int TopCount = ReportFormatter.TopCount;
     private const int ColumnCount = 4 + TopCount * 2;
+
+    // 1 PB；更大的數值不會由 MemSweep 寫出，換算成 bytes 時也會溢位
+    private const double MaxGigabytes = 1024 * 1024;
 
     private static readonly UTF8Encoding Utf8WithBom = new(encoderShouldEmitUTF8Identifier: true);
     private static readonly UTF8Encoding StrictUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
@@ -113,20 +117,28 @@ public static class PeakCsv
 
     private static DateTime ParseLocal(string text, TimeZoneInfo zone)
     {
-        // 日光節約時間跳過的時刻不會由 MemSweep 寫出，出現時視為格式不符
+        // 日光節約時間跳過的時刻，與換算成 UTC 會超出範圍的時刻（例如台北時間 0001-01-01 凌晨），
+        // 都不會由 MemSweep 寫出，出現時視為格式不符
         if (!DateTime.TryParseExact(text, TimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var value)
-            || zone.IsInvalidTime(value))
+            || zone.IsInvalidTime(value)
+            || !IsWithinUtcRange(value, zone))
         {
             throw new FormatException("時間格式不符：「" + text + "」");
         }
         return value;
     }
 
+    private static bool IsWithinUtcRange(DateTime local, TimeZoneInfo zone)
+    {
+        long utcTicks = local.Ticks - zone.GetUtcOffset(local).Ticks;
+        return utcTicks >= DateTime.MinValue.Ticks && utcTicks <= DateTime.MaxValue.Ticks;
+    }
+
     private static string Gigabytes(long bytes) =>
         MemoryMath.ToGigabytes(bytes).ToString("0.00", CultureInfo.InvariantCulture);
 
     private static long ParseGigabytes(string text) =>
-        double.TryParse(text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out double value)
+        double.TryParse(text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out double value) && value <= MaxGigabytes
             ? MemoryMath.FromGigabytes(value)
             : throw new FormatException("GB 數值格式不符：「" + text + "」");
 

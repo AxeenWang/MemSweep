@@ -16,6 +16,7 @@ internal sealed class TrayController : IDisposable
     private FullWindowModel? _fullModel;
     private SettingsWindow? _settingsWindow;
     private bool _flyoutRequested;
+    private bool _fullWindowRequested;
     private Icon? _icon;
     private string? _iconKey;
     private GroupedSnapshot? _latest;
@@ -82,7 +83,12 @@ internal sealed class TrayController : IDisposable
         {
             _flyout.PanelView.DataContext = BuildPanel();
         }
-        if (_fullWindow is { IsVisible: true })
+        if (_fullWindowRequested)
+        {
+            _fullWindowRequested = false;
+            ShowFullWindow();
+        }
+        else if (_fullWindow is { IsVisible: true })
         {
             _fullModel!.Update(grouped, peaks);
         }
@@ -90,8 +96,10 @@ internal sealed class TrayController : IDisposable
 
     public void ShowFullWindow()
     {
+        // 和小面板一樣，還沒有第一次取樣的結果時先記下來，取樣完成後再開啟
         if (_latest is null)
         {
+            _fullWindowRequested = true;
             return;
         }
         _flyout?.HidePanel();
