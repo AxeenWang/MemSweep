@@ -70,6 +70,16 @@ SPEC 核准後才寫 Design，Design 核准後才寫 Development 計畫。Develo
 - 不改動 SPEC 與 Design 的小修，經使用者同意後可走 `fix/` 分支。
 - 每次推送前先 fetch，確認遠端分支仍存在，且對應的 pull request 沒有被合併或關閉。
 
+## 版本發佈
+
+版本號規則與發佈流程由 Design 3.12 定義。只在使用者要求時才發佈新版本。
+
+- 版本號只在 `app/Directory.Build.props` 的 `Version` 設定一次，格式為「主版本.次版本.修訂」。修正而不改 SPEC 時修訂加一；要改 SPEC 的新功能次版本加一；不相容的改動主版本加一，例如 CLI 的參數、結束碼或 JSON 欄位改變，或舊版寫的 CSV、`settings.json` 無法再讀取。
+- 改版本號走 `release/vX.Y.Z` 分支與 pull request。
+- 使用者合併後，在 `main` 的該 merge commit 打附註 tag，並只推送這個 tag：`git tag -a vX.Y.Z -m "MemSweep X.Y.Z"` 與 `git push origin vX.Y.Z`。不建立 GitHub Release。
+- 把該 commit 發佈到全新、空的 `app/artifacts/release/vX.Y.Z/`：`(cd app && dotnet publish MemSweep.Desktop -c Release -r win-x64 --self-contained false -o artifacts/release/vX.Y.Z)` 與 `(cd app && dotnet publish MemSweep.Cli -c Release -r win-x64 --self-contained false -o artifacts/release/vX.Y.Z)`。
+- 正式版放在 repo 外的 `D:\Tools\MemSweep\`，每次寫入都要先取得使用者同意。先由使用者結束執行中的 MemSweep，再把發佈的檔案複製過去，保留既有的 `data\`。`app/artifacts/publish/MemSweep/` 只用於驗收版。
+
 ## 系統安全
 
 MemSweep 作用於整台電腦的記憶體狀態，而開發機就是使用者的日常電腦。
