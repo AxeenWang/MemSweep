@@ -125,6 +125,23 @@ public sealed class SettingsServiceTests
     }
 
     [TestMethod]
+    public void SavingAgainAfterARegistryFailureRetriesTheRegistry()
+    {
+        // 關閉開機自動啟動時登錄被鎖住；再按一次「儲存」要重試，而不是因為開關「沒有改變」就回報成功
+        _registry.Value = Command;
+        var service = Service(AppSettings.Default with { AutoStart = true });
+        _registry.Failure = new UnauthorizedAccessException();
+        Assert.AreEqual("設定已儲存，但無法變更開機自動啟動", service.Save(AppSettings.Default));
+
+        Assert.AreEqual("設定已儲存，但無法變更開機自動啟動", service.Save(AppSettings.Default));
+        Assert.AreEqual(Command, _registry.Value);
+
+        _registry.Failure = null;
+        Assert.IsNull(service.Save(AppSettings.Default));
+        Assert.IsNull(_registry.Value);
+    }
+
+    [TestMethod]
     public void StartupSyncUpdatesAMovedExe()
     {
         _registry.Value = "\"C:\\Users\\me\\Downloads\\MemSweep\\MemSweep.exe\"";

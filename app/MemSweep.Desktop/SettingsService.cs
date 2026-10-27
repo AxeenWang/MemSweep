@@ -15,6 +15,7 @@ internal sealed class SettingsService
 
     private readonly SettingsStore _store;
     private readonly AutoStart _autoStart;
+    private bool _autoStartPending;
 
     public SettingsService(SettingsStore store, AutoStart autoStart)
     {
@@ -52,8 +53,9 @@ internal sealed class SettingsService
 
         Current = next;
         Changed?.Invoke(next);
-        // 只在開關改變時才動登錄，其他設定的變更不會改寫使用者的開機項目
-        if (next.AutoStart != previous.AutoStart && !TryApplyAutoStart(next.AutoStart))
+        // 只在開關改變時才動登錄，其他設定的變更不會改寫使用者的開機項目；
+        // 上一次登錄操作失敗時，這次儲存也重試，不會因為開關「沒有改變」就回報成功
+        if ((next.AutoStart != previous.AutoStart || _autoStartPending) && !TryApplyAutoStart(next.AutoStart))
         {
             return AutoStartFailedMessage;
         }
@@ -65,10 +67,12 @@ internal sealed class SettingsService
         try
         {
             _autoStart.Apply(enabled);
+            _autoStartPending = false;
             return true;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
         {
+            _autoStartPending = true;
             return false;
         }
     }
