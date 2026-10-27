@@ -30,7 +30,7 @@ MemSweep is a read-only Windows commit-charge monitor. A tray app shows commit u
 - Publish framework-dependent for win-x64, with both exes in one folder.
 - Run every `dotnet` command inside `app/`, because `app/global.json` pins the SDK, the MSTest.Sdk version, and the test runner. For example: `(cd app && dotnet build)`.
 - Test: `(cd app && dotnet test)`. Unit tests only: `(cd app && dotnet test --filter "TestCategory!=Live")`. Live tests read the real system and are read-only.
-- Publish commands are added in Phase 04.
+- Publish (framework-dependent, win-x64, both exes in `app/artifacts/publish/MemSweep/`): `(cd app && dotnet publish MemSweep.Desktop -c Release -r win-x64 --self-contained false -o artifacts/publish/MemSweep)` and `(cd app && dotnet publish MemSweep.Cli -c Release -r win-x64 --self-contained false -o artifacts/publish/MemSweep)`.
 
 ## Language
 
