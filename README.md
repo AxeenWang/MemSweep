@@ -20,9 +20,13 @@ MemSweep 只讀取系統資訊：不清理記憶體、不結束任何程式，�
 
 `MemSweep.exe`、`memsweep-cli.exe` 與共用的 DLL 都會放在 `app/artifacts/publish/MemSweep/`。測試：`(cd app && dotnet test)`。
 
+正式版本以 git tag 標示，例如 `v1.0.0`。要建置某個版本，先執行 `git switch --detach v1.0.0`，再執行上面的指令。
+
 ## 安裝
 
 把 `MemSweep` 資料夾整個複製到自己有寫入權限的位置，例如 `D:\Tools\MemSweep`。不要放在 `C:\Program Files` 這類需要系統管理員權限才能寫入的位置：設定與尖峰紀錄會寫在 exe 旁邊的 `data\` 資料夾。
+
+升級時先從系統匣結束 MemSweep，再用新版的檔案覆蓋，保留原本的 `data\`。目前的版本可在 exe 的「內容 → 詳細資料」查看：產品版本例如 `1.0.0+<commit>`，`+` 後面是建置時的 commit。
 
 ## 使用
 
