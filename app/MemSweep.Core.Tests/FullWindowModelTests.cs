@@ -35,6 +35,19 @@ public sealed class FullWindowModelTests
     }
 
     [TestMethod]
+    public void NewThresholdsApplyAtTheNextUpdate()
+    {
+        var model = Model();
+        model.Update(ReportSamples.Typical(), NoPeaks);
+        Assert.AreEqual(UsageLevel.Orange, model.Overview!.Commit.Level);
+
+        model.Thresholds = new UsageThresholds(60, 75);
+        model.Update(ReportSamples.Typical(), NoPeaks);
+
+        Assert.AreEqual(UsageLevel.Red, model.Overview!.Commit.Level);
+    }
+
+    [TestMethod]
     public void AppsListsEveryAppByCommitThenUnattributed()
     {
         var model = Model();

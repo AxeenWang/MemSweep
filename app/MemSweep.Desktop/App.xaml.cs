@@ -28,12 +28,17 @@ public partial class App : Application
             return;
         }
 
+        // 設定與尖峰紀錄放在 exe 所在資料夾下的 data\（F-52）
+        string data = Path.Combine(AppContext.BaseDirectory, "data");
+        var settings = new SettingsService(new SettingsStore(data), new AutoStart(new RunKeyRegistry(), Environment.ProcessPath!));
+        settings.SyncAutoStart();
+
         _theme = new ThemeWatcher(Resources);
-        _tray = new TrayController();
+        _tray = new TrayController(settings);
         _tray.ExitRequested += () => Shutdown();
         // UI 執行緒的工作一律用 BeginInvoke，例外才不會像 InvokeAsync 那樣消失（Design 3.4）
         _instance.ShowRequested += () => Dispatcher.BeginInvoke(new Action(() => _tray?.ShowFlyout()));
-        StartSampling();
+        StartSampling(data, settings);
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -48,12 +53,13 @@ public partial class App : Application
         base.OnExit(e);
     }
 
-    private void StartSampling()
+    private void StartSampling(string data, SettingsService settings)
     {
-        // 設定與尖峰紀錄放在 exe 所在資料夾下的 data\（F-52）
-        var opening = PeakStore.Open(Path.Combine(AppContext.BaseDirectory, "data"), TimeZoneInfo.Local);
-        var peaks = new PeakRecorder(opening, PeakStore.DefaultRetentionDays);
+        var opening = PeakStore.Open(data, TimeZoneInfo.Local);
+        var peaks = new PeakRecorder(opening, settings.Current.RetentionDays);
         _peaks = peaks;
+        // 保留天數改變後，下一次取樣就依新的天數清理（Design 3.9）
+        settings.Changed += changed => peaks.SetRetentionDays(changed.RetentionDays);
 
         // MemorySampler 只在取樣迴圈裡使用；PeakRecorder 另外會在結束時由 UI 執行緒呼叫，自己有 lock
         var sampler = MemorySampler.CreateDefault();

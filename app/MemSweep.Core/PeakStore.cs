@@ -13,7 +13,6 @@ public sealed record PeakStoreOpening(PeakHistory History, IPeakStore? Store, st
 /// <summary>data\ 資料夾裡的 peaks-boot.csv 與 peaks-daily.csv（F-34、F-52、Design 3.9）。</summary>
 public sealed class PeakStore : IPeakStore
 {
-    public const int DefaultRetentionDays = 90;
     public const string UnwritableWarning = "data 資料夾無法寫入，尖峰紀錄已停用";
 
     private readonly string _directory;

@@ -9,6 +9,7 @@ namespace MemSweep.Desktop;
 /// <summary>系統匣圖示、提示文字、右鍵選單、小面板與完整視窗（F-01～F-24）。必須在 UI 執行緒上使用。</summary>
 internal sealed class TrayController : IDisposable
 {
+    private readonly SettingsService _settings;
     private readonly NotifyIcon _notifyIcon;
     private FlyoutWindow? _flyout;
     private FullWindow? _fullWindow;
@@ -19,8 +20,10 @@ internal sealed class TrayController : IDisposable
     private GroupedSnapshot? _latest;
     private PeakState? _latestPeaks;
 
-    public TrayController()
+    public TrayController(SettingsService settings)
     {
+        _settings = settings;
+        _settings.Changed += OnSettingsChanged;
         // 「設定…」在 Phase 04 加入
         var menu = new ContextMenuStrip();
         menu.Items.Add("開啟小面板", null, (_, _) => ShowFlyout());
@@ -56,7 +59,7 @@ internal sealed class TrayController : IDisposable
     {
         var snapshot = grouped.Snapshot;
         string text = TrayText.IconText(snapshot);
-        var level = UsageThresholds.Default.LevelOf(TrayText.CommitPercent(snapshot));
+        var level = _settings.Current.Thresholds.LevelOf(TrayText.CommitPercent(snapshot));
         int size = SystemInformation.SmallIconSize.Width;
 
         // 數字、顏色與尺寸都沒變就不重畫
@@ -103,6 +106,7 @@ internal sealed class TrayController : IDisposable
 
     public void Dispose()
     {
+        _settings.Changed -= OnSettingsChanged;
         if (_fullWindow is { } window)
         {
             window.Closed -= OnFullWindowClosed;
@@ -116,7 +120,7 @@ internal sealed class TrayController : IDisposable
     }
 
     private PanelModel BuildPanel() =>
-        PanelModel.Build(_latest!, _latestPeaks?.BootPeak, UsageThresholds.Default, _latestPeaks?.StorageWarning);
+        PanelModel.Build(_latest!, _latestPeaks?.BootPeak, _settings.Current.Thresholds, _latestPeaks?.StorageWarning);
 
     // 第一次開啟時才建立，之後只顯示／隱藏：只用系統匣時，行程不必載入 WPF 視窗（約省 40 MB）
     private FlyoutWindow EnsureFlyout()
@@ -136,7 +140,7 @@ internal sealed class TrayController : IDisposable
     {
         if (_fullWindow is null)
         {
-            _fullModel ??= new FullWindowModel(UsageThresholds.Default, TimeZoneInfo.Local);
+            _fullModel ??= new FullWindowModel(_settings.Current.Thresholds, TimeZoneInfo.Local);
             _fullWindow = new FullWindow { DataContext = _fullModel };
             _fullWindow.Closed += OnFullWindowClosed;
         }
@@ -151,6 +155,19 @@ internal sealed class TrayController : IDisposable
         Dispatcher.CurrentDispatcher.BeginInvoke(
             DispatcherPriority.ApplicationIdle,
             new Action(() => GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true)));
+    }
+
+    // 圖示顏色、小面板與完整視窗立即換成新的門檻，不等下一次取樣
+    private void OnSettingsChanged(AppSettings settings)
+    {
+        if (_fullModel is not null)
+        {
+            _fullModel.Thresholds = settings.Thresholds;
+        }
+        if (_latest is not null)
+        {
+            Update(_latest, _latestPeaks!);
+        }
     }
 
     private void ToggleFlyout()

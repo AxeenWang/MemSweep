@@ -8,7 +8,7 @@ public enum UsageLevel
     Red,
 }
 
-/// <summary>橘色與紅色門檻（百分比）。Phase 04 之前一律使用預設值 70、85。</summary>
+/// <summary>橘色與紅色門檻（百分比），預設 70、85；使用者可在設定視窗調整（F-03、F-50）。</summary>
 public sealed record UsageThresholds(int OrangePercent, int RedPercent)
 {
     public static UsageThresholds Default { get; } = new(70, 85);

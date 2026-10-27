@@ -5,7 +5,7 @@ public sealed record PeakState(BootPeak? BootPeak, PeakHistory History, string? 
 
 /// <summary>
 /// 以每次取樣更新尖峰紀錄並寫入 CSV（Design 3.9）：尖峰有變動就標記，最多每 60 秒寫一次，
-/// 正常結束時再寫一次；保留天數清理在啟動後第一次取樣與跨日時執行（F-33）。
+/// 正常結束時再寫一次；保留天數清理在啟動後第一次取樣、跨日與保留天數改變後的下一次取樣時執行（F-33）。
 /// 取樣執行緒與結束時的 UI 執行緒都會呼叫，以 lock 保護。
 /// </summary>
 public sealed class PeakRecorder
@@ -16,7 +16,7 @@ public sealed class PeakRecorder
     private readonly PeakTracker _tracker;
     private readonly IPeakStore? _store;
     private readonly string? _warning;
-    private readonly int _retentionDays;
+    private int _retentionDays;
     private DateOnly? _prunedOn;
     private DateTimeOffset? _lastWrite;
     private bool _dirty;
@@ -58,6 +58,16 @@ public sealed class PeakRecorder
                 _lastWrite = now;
                 Write();
             }
+        }
+    }
+
+    /// <summary>保留天數改變時由 UI 執行緒呼叫：下一次取樣就依新的天數清理（Design 3.9）。</summary>
+    public void SetRetentionDays(int retentionDays)
+    {
+        lock (_gate)
+        {
+            _retentionDays = retentionDays;
+            _prunedOn = null;
         }
     }
 
