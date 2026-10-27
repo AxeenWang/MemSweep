@@ -84,6 +84,17 @@ public sealed class PeakStoreTests
     }
 
     [TestMethod]
+    public void SaveRecreatesADataFolderDeletedWhileRunning()
+    {
+        var store = PeakStore.Open(DataDirectory, Zone).Store!;
+        Directory.Delete(DataDirectory, recursive: true);
+
+        store.Save(History(days: 2));
+
+        Assert.HasCount(2, PeakStore.Open(DataDirectory, Zone).History.Days);
+    }
+
+    [TestMethod]
     public void AFailedSaveLeavesTheOldFileIntact()
     {
         var store = PeakStore.Open(DataDirectory, Zone).Store!;

@@ -11,7 +11,6 @@ public sealed class FullWindowModel : ObservableObject
 {
     private const string UnattributedKey = "#unattributed";
 
-    private readonly UsageThresholds _thresholds;
     private readonly TimeZoneInfo _zone;
     private PanelModel? _overview;
     private string _pageFileText = string.Empty;
@@ -21,9 +20,12 @@ public sealed class FullWindowModel : ObservableObject
 
     public FullWindowModel(UsageThresholds thresholds, TimeZoneInfo zone)
     {
-        _thresholds = thresholds;
+        Thresholds = thresholds;
         _zone = zone;
     }
+
+    /// <summary>commit 量表的顏色門檻；設定變更後從下一次 Update 開始套用。</summary>
+    public UsageThresholds Thresholds { get; set; }
 
     /// <summary>總覽：小面板的全部資訊（F-22）。</summary>
     public PanelModel? Overview { get => _overview; private set => Set(ref _overview, value); }
@@ -42,7 +44,7 @@ public sealed class FullWindowModel : ObservableObject
 
     public void Update(GroupedSnapshot grouped, PeakState peaks)
     {
-        Overview = PanelModel.Build(grouped, peaks.BootPeak, _thresholds, peaks.StorageWarning);
+        Overview = PanelModel.Build(grouped, peaks.BootPeak, Thresholds, peaks.StorageWarning);
         PageFileText = "分頁檔大小：" + Gigabytes(grouped.Snapshot.PageFileTotalBytes);
         UpdateApps(grouped);
 

@@ -228,4 +228,35 @@ public sealed class PeakCsvTests
     {
         Assert.ThrowsExactly<FormatException>(() => PeakCsv.ReadDays(Utf8(DailyHeader + "\r\n" + row + "\r\n"), Zone));
     }
+
+    // 紀錄檔被改壞時，換算成 UTC 會超出範圍的時間與大到不合理的 GB 數值也是格式不符，MemSweep 啟動時才不會當掉
+    [TestMethod]
+    [DataRow("0001-01-01 07:59:59,未知,36.80,39.40,未知,,,,,,,,,")]
+    [DataRow("2026-10-26 08:30:00,0001-01-01 07:59:59,36.80,39.40,Claude,,,,,3.20,,,,")]
+    [DataRow("2026-10-26 08:30:00,2026-10-26 14:35:02,1048577.00,39.40,Claude,,,,,3.20,,,,")]
+    [DataRow("2026-10-26 08:30:00,2026-10-26 14:35:02,36.80,39.40,Claude,,,,,99999999999.00,,,,")]
+    public void RejectsBootValuesOutsideTheSupportedRange(string row)
+    {
+        Assert.ThrowsExactly<FormatException>(() => PeakCsv.ReadBoots(Utf8(BootHeader + "\r\n" + row + "\r\n"), Zone));
+    }
+
+    [TestMethod]
+    [DataRow("2026-10-26,0001-01-01 07:59:59,31.40,39.40,Claude,,,,,3.20,,,,")]
+    [DataRow("2026-10-26,2026-10-26 14:35:02,31.40,99999999999.00,Claude,,,,,3.20,,,,")]
+    public void RejectsDailyValuesOutsideTheSupportedRange(string row)
+    {
+        Assert.ThrowsExactly<FormatException>(() => PeakCsv.ReadDays(Utf8(DailyHeader + "\r\n" + row + "\r\n"), Zone));
+    }
+
+    [TestMethod]
+    public void AcceptsTheLimitsOfTheSupportedRange()
+    {
+        // 台北時間 0001-01-01 08:00:00 正好是 UTC 的最早時間；GB 最大 1048576（1 PB）
+        byte[] content = Utf8(BootHeader + "\r\n" + "0001-01-01 08:00:00,未知,1048576.00,39.40,未知,,,,,,,,,\r\n");
+
+        var boot = PeakCsv.ReadBoots(content, Zone).Single();
+
+        Assert.AreEqual(DateTime.MinValue, boot.BootTimeUtc);
+        Assert.AreEqual(Gb(1048576), boot.CommitBytes);
+    }
 }

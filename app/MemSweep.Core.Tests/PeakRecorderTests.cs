@@ -207,4 +207,21 @@ public sealed class PeakRecorderTests
             new[] { new DateOnly(2026, 10, 26), new DateOnly(2026, 10, 27) },
             recorder.State.History.Days.Select(d => d.Date).ToArray());
     }
+
+    [TestMethod]
+    public void ALowerRetentionIsAppliedAtTheNextSample()
+    {
+        var store = new FakeStore();
+        var saved = new PeakHistory([], [Day(10, 20, 30.0), Day(10, 24, 30.0), Day(10, 25, 30.0)]);
+        var recorder = Recorder(store, saved, retentionDays: 90);
+        recorder.Record(Sample(31.4, At(26, 14, 0, 0)));
+        Assert.HasCount(4, recorder.State.History.Days);
+
+        recorder.SetRetentionDays(2);
+        recorder.Record(Sample(30.0, At(26, 14, 0, 2)));
+
+        CollectionAssert.AreEqual(
+            new[] { new DateOnly(2026, 10, 25), new DateOnly(2026, 10, 26) },
+            recorder.State.History.Days.Select(d => d.Date).ToArray());
+    }
 }

@@ -7,33 +7,7 @@
              FontSize="12"
              Foreground="{DynamicResource TextBrush}">
   <UserControl.Resources>
-    <Style x:Key="PanelButton" TargetType="Button">
-      <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
-      <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrush}" />
-      <Setter Property="Padding" Value="10,4" />
-      <Setter Property="Margin" Value="0,0,6,0" />
-      <Setter Property="Cursor" Value="Hand" />
-      <Setter Property="Template">
-        <Setter.Value>
-          <ControlTemplate TargetType="Button">
-            <Border x:Name="Chrome"
-                    Background="{TemplateBinding Background}"
-                    BorderBrush="{TemplateBinding BorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="4"
-                    Padding="{TemplateBinding Padding}">
-              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-            </Border>
-            <ControlTemplate.Triggers>
-              <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource ButtonHoverBrush}" />
-              </Trigger>
-            </ControlTemplate.Triggers>
-          </ControlTemplate>
-        </Setter.Value>
-      </Setter>
-    </Style>
+    <ResourceDictionary Source="Styles.xaml" />
   </UserControl.Resources>
 
   <Border Background="{DynamicResource PanelBackgroundBrush}"

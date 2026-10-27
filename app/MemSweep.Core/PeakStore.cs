@@ -13,7 +13,6 @@ public sealed record PeakStoreOpening(PeakHistory History, IPeakStore? Store, st
 /// <summary>data\ 資料夾裡的 peaks-boot.csv 與 peaks-daily.csv（F-34、F-52、Design 3.9）。</summary>
 public sealed class PeakStore : IPeakStore
 {
-    public const int DefaultRetentionDays = 90;
     public const string UnwritableWarning = "data 資料夾無法寫入，尖峰紀錄已停用";
 
     private readonly string _directory;
@@ -65,8 +64,9 @@ public sealed class PeakStore : IPeakStore
 
     public void Save(PeakHistory history)
     {
-        Replace(PeakCsv.BootFileName, PeakCsv.WriteBoots(history.Boots, _zone));
-        Replace(PeakCsv.DailyFileName, PeakCsv.WriteDays(history.Days, _zone));
+        // 執行中 data\ 被刪除時由 AtomicFile 重新建立，之後的寫入就恢復
+        AtomicFile.Write(Path.Combine(_directory, PeakCsv.BootFileName), PeakCsv.WriteBoots(history.Boots, _zone));
+        AtomicFile.Write(Path.Combine(_directory, PeakCsv.DailyFileName), PeakCsv.WriteDays(history.Days, _zone));
     }
 
     private List<T> Read<T>(string fileName, Func<byte[], TimeZoneInfo, List<T>> parse)
@@ -82,27 +82,5 @@ public sealed class PeakStore : IPeakStore
         using var content = new MemoryStream();
         stream.CopyTo(content);
         return parse(content.ToArray(), _zone);
-    }
-
-    // 先寫暫存檔再取代原檔，寫到一半中斷也不會留下殘缺的紀錄檔
-    private void Replace(string fileName, byte[] content)
-    {
-        string path = Path.Combine(_directory, fileName);
-        string temp = path + ".tmp";
-        using (var stream = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.Read))
-        {
-            stream.Write(content);
-            // 只寫進系統快取就取代原檔的話，斷電或當機後原檔可能整份是 0 而無法讀取，尖峰紀錄就此停用
-            stream.Flush(flushToDisk: true);
-        }
-        try
-        {
-            File.Move(temp, path, overwrite: true);
-        }
-        catch
-        {
-            File.Delete(temp);
-            throw;
-        }
     }
 }

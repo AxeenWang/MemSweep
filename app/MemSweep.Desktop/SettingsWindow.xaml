@@ -1,0 +1,164 @@
+<Window x:Class="MemSweep.Desktop.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:MemSweep.Desktop"
+        Title="MemSweep 設定"
+        Width="360"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI, Microsoft JhengHei UI"
+        FontSize="12"
+        Background="{DynamicResource PanelBackgroundBrush}"
+        Foreground="{DynamicResource TextBrush}">
+  <!-- 設定視窗（F-50、Design 3.6）；DataContext 是 SettingsForm -->
+  <!-- 自訂標題列（F-62）：不能調整大小，TitleBar 只顯示關閉按鈕 -->
+  <WindowChrome.WindowChrome>
+    <WindowChrome CaptionHeight="32"
+                  ResizeBorderThickness="0"
+                  GlassFrameThickness="0"
+                  CornerRadius="0"
+                  UseAeroCaptionButtons="False" />
+  </WindowChrome.WindowChrome>
+
+  <Window.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Styles.xaml" />
+      </ResourceDictionary.MergedDictionaries>
+
+      <!-- 數字輸入框：關閉輸入法，注音模式下也直接打出半形數字 -->
+      <Style TargetType="TextBox">
+        <Setter Property="Width" Value="64" />
+        <Setter Property="Padding" Value="4,2" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrush}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Right" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="InputMethod.IsInputMethodEnabled" Value="False" />
+      </Style>
+
+      <!-- 自訂核取方塊，深色模式下才不會出現系統預設的白色方塊 -->
+      <Style TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+          <Setter.Value>
+            <ControlTemplate TargetType="CheckBox">
+              <StackPanel Orientation="Horizontal" Background="Transparent">
+                <Border x:Name="Box"
+                        Width="16"
+                        Height="16"
+                        CornerRadius="3"
+                        BorderThickness="1"
+                        BorderBrush="{DynamicResource ButtonBorderBrush}"
+                        Background="{DynamicResource ButtonBackgroundBrush}"
+                        VerticalAlignment="Center">
+                  <TextBlock x:Name="Mark"
+                             Text="&#xE73E;"
+                             FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                             FontSize="10"
+                             Foreground="White"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"
+                             Visibility="Collapsed" />
+                </Border>
+                <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+              <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                  <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                  <Setter TargetName="Box" Property="Background" Value="{DynamicResource AccentBrush}" />
+                  <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                  <Setter TargetName="Mark" Property="Visibility" Value="Visible" />
+                </Trigger>
+              </ControlTemplate.Triggers>
+            </ControlTemplate>
+          </Setter.Value>
+        </Setter>
+      </Style>
+    </ResourceDictionary>
+  </Window.Resources>
+
+  <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1">
+    <DockPanel>
+      <local:TitleBar x:Name="Caption" DockPanel.Dock="Top" />
+      <StackPanel Margin="20,8,20,20">
+        <TextBlock Text="commit 使用率的顏色" FontWeight="SemiBold" />
+        <Grid Margin="0,8,0,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+          <TextBlock Text="橘色門檻" VerticalAlignment="Center" Margin="0,0,12,0" />
+          <TextBox x:Name="OrangeBox" Grid.Column="1" Text="{Binding OrangeText, UpdateSourceTrigger=PropertyChanged}" />
+          <TextBlock Grid.Column="2" Text="%" VerticalAlignment="Center" Margin="6,0,0,0" />
+          <TextBlock Grid.Row="1" Text="紅色門檻" VerticalAlignment="Center" Margin="0,6,12,0" />
+          <TextBox x:Name="RedBox" Grid.Row="1" Grid.Column="1" Margin="0,6,0,0" Text="{Binding RedText, UpdateSourceTrigger=PropertyChanged}" />
+          <TextBlock Grid.Row="1" Grid.Column="2" Text="%" VerticalAlignment="Center" Margin="6,6,0,0" />
+        </Grid>
+        <TextBlock Text="低於橘色門檻為綠色，達到紅色門檻以上為紅色。"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   TextWrapping="Wrap"
+                   Margin="0,6,0,0" />
+
+        <TextBlock Text="尖峰紀錄" FontWeight="SemiBold" Margin="0,16,0,0" />
+        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+          <TextBlock Text="保留天數" VerticalAlignment="Center" Margin="0,0,12,0" />
+          <TextBox x:Name="RetentionBox" Text="{Binding RetentionText, UpdateSourceTrigger=PropertyChanged}" />
+          <TextBlock Text="天" VerticalAlignment="Center" Margin="6,0,0,0" />
+        </StackPanel>
+        <TextBlock Text="減少天數後，超過天數的紀錄會在下一次取樣時刪除。"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   TextWrapping="Wrap"
+                   Margin="0,6,0,0" />
+
+        <TextBlock Text="啟動" FontWeight="SemiBold" Margin="0,16,0,0" />
+        <CheckBox x:Name="AutoStartBox" Content="開機時自動啟動 MemSweep" IsChecked="{Binding AutoStart}" Margin="0,8,0,0" />
+
+        <!-- 輸入不合法或儲存失敗的原因，沒有問題時不顯示 -->
+        <TextBlock x:Name="ErrorText"
+                   Text="{Binding Error}"
+                   Foreground="{DynamicResource RedBrush}"
+                   TextWrapping="Wrap"
+                   Margin="0,16,0,0">
+          <TextBlock.Style>
+            <Style TargetType="TextBlock">
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding Error}" Value="{x:Null}">
+                  <Setter Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </TextBlock.Style>
+        </TextBlock>
+
+        <!-- Enter 等同「儲存」，Esc 等同「取消」 -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+          <Button x:Name="SaveButton"
+                  Content="儲存"
+                  MinWidth="72"
+                  IsDefault="True"
+                  Style="{StaticResource PanelButton}"
+                  Click="SaveButton_Click" />
+          <Button x:Name="CancelButton"
+                  Content="取消"
+                  MinWidth="72"
+                  Margin="0"
+                  IsCancel="True"
+                  Style="{StaticResource PanelButton}"
+                  Click="CancelButton_Click" />
+        </StackPanel>
+      </StackPanel>
+    </DockPanel>
+  </Border>
+</Window>
