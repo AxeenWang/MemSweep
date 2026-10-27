@@ -66,6 +66,7 @@ SPEC 核准後才寫 Design，Design 核准後才寫 Development 計畫。Develo
 - Phase 分支在該 Phase 開工時才建立，不得預先建立後續 Phase 的分支。各 Phase 嚴格依序進行。
 - 每完成一個 Task 就推送。該 Phase 所有 Task 都完成後才開 pull request。
 - 何時合併由使用者決定，使用 merge commit 合併。
+- 合併完成後必須清理所有分支：刪除本地與遠端的已合併分支，清掉過期的 remote-tracking 參照，並確認本地、remote-tracking 與遠端都只剩 `main`，也沒有殘留的 worktree。
 - 不改動 SPEC 與 Design 的小修，經使用者同意後可走 `fix/` 分支。
 - 每次推送前先 fetch，確認遠端分支仍存在，且對應的 pull request 沒有被合併或關閉。
 

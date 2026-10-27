@@ -64,6 +64,7 @@ The SPEC is approved before the Design is written, and the Design is approved be
 - Create a Phase branch only when that Phase starts. Never create branches for later Phases in advance. Phases run strictly in order.
 - Push after each completed Task. Open the pull request only after every Task in the Phase is done.
 - The user decides when to merge. Merge with a merge commit.
+- After a merge, clean up every branch: delete the merged branch locally and on the remote, prune stale remote-tracking references, and confirm that only `main` remains locally, in the remote-tracking references, and on the remote, with no leftover worktree.
 - A small fix that changes neither the SPEC nor the Design may use a `fix/` branch when the user agrees.
 - Before every push, fetch and confirm that the remote branch still exists and that its pull request is not merged or closed.
 
