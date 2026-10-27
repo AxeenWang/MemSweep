@@ -14,6 +14,7 @@ internal sealed class TrayController : IDisposable
     private FlyoutWindow? _flyout;
     private FullWindow? _fullWindow;
     private FullWindowModel? _fullModel;
+    private WindowPlacement? _fullPlacement;
     private SettingsWindow? _settingsWindow;
     private bool _flyoutRequested;
     private bool _fullWindowRequested;
@@ -156,13 +157,14 @@ internal sealed class TrayController : IDisposable
         return _flyout;
     }
 
-    // 第一次開啟時才建立；展開狀態保存在 FullWindowModel，關閉後再開仍在
+    // 第一次開啟時才建立；展開狀態保存在 FullWindowModel、位置與大小保存在 _fullPlacement，關閉後再開仍在
     private FullWindow EnsureFullWindow()
     {
         if (_fullWindow is null)
         {
             _fullModel ??= new FullWindowModel(_settings.Current.Thresholds, TimeZoneInfo.Local);
             _fullWindow = new FullWindow { DataContext = _fullModel };
+            _fullWindow.Restore(_fullPlacement, WindowPlacement.VirtualScreen);
             _fullWindow.Closed += OnFullWindowClosed;
         }
         return _fullWindow;
@@ -170,6 +172,7 @@ internal sealed class TrayController : IDisposable
 
     private void OnFullWindowClosed(object? sender, EventArgs e)
     {
+        _fullPlacement = _fullWindow?.LastPlacement ?? _fullPlacement;
         _fullWindow = null;
         ReleaseMemoryWhenIdle();
     }
