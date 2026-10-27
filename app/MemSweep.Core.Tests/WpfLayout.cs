@@ -16,6 +16,29 @@ internal static class WpfLayout
         return element;
     }
 
+    /// <summary>像視窗一樣把元件排滿固定的大小；<see cref="LaidOut"/> 則會縮成內容需要的大小。</summary>
+    public static T Sized<T>(T element, double width, double height)
+        where T : FrameworkElement
+    {
+        element.Measure(new Size(width, height));
+        element.Arrange(new Rect(0, 0, width, height));
+        element.UpdateLayout();
+        return element;
+    }
+
+    public static T Ancestor<T>(DependencyObject element)
+        where T : DependencyObject
+    {
+        for (var node = VisualTreeHelper.GetParent(element); node is not null; node = VisualTreeHelper.GetParent(node))
+        {
+            if (node is T found)
+            {
+                return found;
+            }
+        }
+        throw new InvalidOperationException($"找不到上層的 {typeof(T).Name}");
+    }
+
     public static IEnumerable<DependencyObject> Descendants(DependencyObject root)
     {
         for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)

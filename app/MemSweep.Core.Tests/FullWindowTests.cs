@@ -139,4 +139,87 @@ public sealed class FullWindowTests
         CollectionAssert.IsSubsetOf(new[] { "總覽", "程式", "尖峰紀錄", "Commit", "31.4 / 39.4 GB（80%）", "分頁檔大小：8.0 GB" }, texts);
         window.Close();
     }
+
+    private static FullWindowModel ModelWithPeaks()
+    {
+        PeakApp[] top =
+        [
+            new("Claude", Gb(3.2)), new("ChatGPT", Gb(2.2)), new("Microsoft Edge WebView2", Gb(1.8)),
+            new("Node.js JavaScript Runtime", Gb(1.4)), new("Microsoft Edge", Gb(1.3)),
+        ];
+        var time = new DateTimeOffset(2026, 10, 26, 14, 35, 2, TimeSpan.FromHours(8));
+        var boot = new BootPeak(new DateTime(2026, 10, 26, 0, 30, 0, DateTimeKind.Utc), Gb(36.8), Gb(39.4), time, top);
+        var history = new PeakHistory([boot], [new DailyPeak(new DateOnly(2026, 10, 26), Gb(31.4), Gb(39.4), time, top)]);
+        var model = new FullWindowModel(UsageThresholds.Default, Zone);
+        model.Update(ReportSamples.Typical(), new PeakState(boot, history, null));
+        return model;
+    }
+
+    // 把完整視窗的內容排成指定的視窗大小，並切到指定的分頁
+    private static FrameworkElement WindowContent(FullWindow window, double width, double height, int tab)
+    {
+        var content = WpfLayout.Sized((FrameworkElement)window.Content, width, height);
+        WpfLayout.Descendants(content).OfType<TabControl>().Single().SelectedIndex = tab;
+        content.UpdateLayout();
+        return content;
+    }
+
+    [STATestMethod]
+    [DataRow(520, 360)]
+    [DataRow(760, 560)]
+    [DataRow(1280, 800)]
+    public void TheOverviewFillsTheWindowWidthLeavingRoomForTheScrollBar(int width, int height)
+    {
+        var window = new FullWindow { DataContext = ModelWithComponents() };
+        var content = WindowContent(window, width, height, 0);
+
+        var summary = WpfLayout.Descendants(content).OfType<SummaryView>().Single();
+        var scroller = WpfLayout.Ancestor<ScrollViewer>(summary);
+        double right = summary.TranslatePoint(new Point(summary.ActualWidth, 0), scroller).X;
+
+        Assert.AreEqual(scroller.ViewportWidth - 8, right, 0.5);
+        window.Close();
+    }
+
+    [STATestMethod]
+    public void TheTopAppsHeaderIsFullyVisibleInTheSmallestWindow()
+    {
+        var window = new FullWindow { DataContext = ModelWithPeaks() };
+        var content = WindowContent(window, window.MinWidth, window.MinHeight, 2);
+
+        var peaks = WpfLayout.Descendants(content).OfType<PeaksView>().Single();
+        var headers = WpfLayout.Descendants(peaks).OfType<TextBlock>().Where(t => t.Text == "當時的前五名").ToList();
+
+        // 欄位比文字窄時 TextBlock 仍保留原本的寬度、只是畫面被裁掉，所以比的是欄位扣掉左邊距後的寬度
+        Assert.HasCount(2, headers);
+        foreach (var header in headers)
+        {
+            var natural = new TextBlock { Text = header.Text, FontFamily = header.FontFamily, FontSize = header.FontSize, FontWeight = header.FontWeight };
+            natural.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            double room = ((Grid)header.Parent).ColumnDefinitions[Grid.GetColumn(header)].ActualWidth - header.Margin.Left;
+            Assert.IsGreaterThanOrEqualTo(natural.DesiredSize.Width, room);
+        }
+        window.Close();
+    }
+
+    [STATestMethod]
+    [DataRow(520, 360)]
+    [DataRow(1280, 800)]
+    public void PeakColumnsLineUpWithTheirHeaders(int width, int height)
+    {
+        var window = new FullWindow { DataContext = ModelWithPeaks() };
+        var content = WindowContent(window, width, height, 2);
+
+        // 欄名與每一列各是一個 Grid；兩段（開機、每日）的欄位起點都要一致
+        var peaks = WpfLayout.Descendants(content).OfType<PeaksView>().Single();
+        var offsets = WpfLayout.Descendants(peaks)
+            .OfType<Grid>()
+            .Where(g => g.ColumnDefinitions.Count == 5)
+            .Select(g => string.Join(",", g.ColumnDefinitions.Select(c => g.TranslatePoint(new Point(c.Offset, 0), peaks).X.ToString("F1"))))
+            .ToList();
+
+        Assert.HasCount(4, offsets);
+        Assert.AreEqual(1, offsets.Distinct().Count(), string.Join(" | ", offsets));
+        window.Close();
+    }
 }
