@@ -120,12 +120,23 @@ public sealed class CliAppTests
 
         int exitCode = CliApp.Run(
             ["status"],
-            () => throw new InvalidOperationException("NtQuerySystemInformation(5) 失敗：0xC0000017"),
+            () => throw new NtStatusException(unchecked((int)0xC0000017), 5),
             new StringWriter(),
             error);
 
         Assert.AreEqual(CliApp.ExitSampleError, exitCode);
         Assert.AreEqual("錯誤：無法取得系統記憶體資訊：NtQuerySystemInformation(5) 失敗：0xC0000017\n", error.ToString());
+    }
+
+    [TestMethod]
+    public void ProgrammingErrorsAreNotReportedAsSamplingFailures()
+    {
+        // 結束碼 3 只代表無法取得系統記憶體資訊（Design 3.11）；程式錯誤照常讓 memsweep-cli 結束並印出堆疊
+        Assert.ThrowsExactly<InvalidOperationException>(() => CliApp.Run(
+            ["status"],
+            () => throw new InvalidOperationException("Sequence contains no elements"),
+            new StringWriter(),
+            new StringWriter()));
     }
 
     [TestMethod]
