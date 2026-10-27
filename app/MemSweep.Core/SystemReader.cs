@@ -151,12 +151,11 @@ public sealed unsafe class SystemReader : ISystemReader
         }
     }
 
-    private static void ThrowIfFailed(int status, int informationClass)
+    internal static void ThrowIfFailed(int status, int informationClass)
     {
         if (status != 0)
         {
-            throw new InvalidOperationException(
-                $"NtQuerySystemInformation({informationClass}) 失敗：0x{status:X8}");
+            throw new NtStatusException(status, informationClass);
         }
     }
 }

@@ -45,7 +45,7 @@ public sealed class SamplingLoopTests
                 return calls switch
                 {
                     1 => throw new Win32Exception(5),
-                    2 => throw new InvalidOperationException("NtQuerySystemInformation(5) 失敗：0xC0000017"),
+                    2 => throw new NtStatusException(unchecked((int)0xC0000017), 5),
                     _ => ReportSamples.Typical(),
                 };
             },
@@ -72,6 +72,16 @@ public sealed class SamplingLoopTests
         var loop = new SamplingLoop(() => throw new NullReferenceException(), _ => { }, Fast);
 
         await Assert.ThrowsExactlyAsync<NullReferenceException>(() => loop.RunAsync(cts.Token));
+    }
+
+    [TestMethod]
+    public async Task AnInvalidOperationExceptionIsAProgrammingErrorAndStopsTheLoop()
+    {
+        // 例如 LINQ 的 First() 或 Max() 遇到空集合；當成取樣失敗略過的話，圖示會一直停在舊數字
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var loop = new SamplingLoop(() => throw new InvalidOperationException("Sequence contains no elements"), _ => { }, Fast);
+
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => loop.RunAsync(cts.Token));
     }
 
     [TestMethod]

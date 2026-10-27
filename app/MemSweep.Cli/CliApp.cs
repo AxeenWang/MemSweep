@@ -25,7 +25,7 @@ public static class CliApp
         {
             return RunCommand(args, sample, output, error);
         }
-        catch (Exception e) when (e is Win32Exception or InvalidOperationException)
+        catch (Exception e) when (e is Win32Exception or NtStatusException)
         {
             // 取樣失敗不印堆疊，讓呼叫端只需要認得固定的結束碼
             error.Write("錯誤：無法取得系統記憶體資訊：" + e.Message + "\n");

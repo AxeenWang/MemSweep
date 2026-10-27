@@ -4,7 +4,7 @@ namespace MemSweep.Core;
 
 /// <summary>
 /// 立即取樣一次，之後每隔固定時間取樣並發布結果（Design 3.4）。
-/// 取樣時的 Win32 錯誤只略過那一次；其他例外視為程式錯誤，讓迴圈結束。
+/// 取樣時的 Win32 錯誤與 NTSTATUS 失敗只略過那一次；其他例外視為程式錯誤，讓迴圈結束。
 /// </summary>
 public sealed class SamplingLoop
 {
@@ -31,7 +31,7 @@ public sealed class SamplingLoop
             {
                 grouped = _sample();
             }
-            catch (Exception e) when (e is Win32Exception or InvalidOperationException)
+            catch (Exception e) when (e is Win32Exception or NtStatusException)
             {
                 // 這一次取樣失敗，畫面保留上一次的結果，下次再試
             }
