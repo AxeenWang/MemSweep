@@ -76,7 +76,7 @@ Design 3.12 defines the version rules and the release process. Release a new ver
 - A version change goes through a `release/vX.Y.Z` branch and a pull request.
 - After the user merges it, create an annotated tag on that merge commit in `main` and push only that tag: `git tag -a vX.Y.Z -m "MemSweep X.Y.Z"` and `git push origin vX.Y.Z`. Do not create GitHub Releases.
 - Publish that commit to a new, empty `app/artifacts/release/vX.Y.Z/`: `(cd app && dotnet publish MemSweep.Desktop -c Release -r win-x64 --self-contained false -o artifacts/release/vX.Y.Z)` and `(cd app && dotnet publish MemSweep.Cli -c Release -r win-x64 --self-contained false -o artifacts/release/vX.Y.Z)`.
-- The installed copy is at `D:\Tools\MemSweep\`, outside the repository. Writing there needs the user's approval for each release. The user exits the running MemSweep first; then copy the release files over the installed copy and keep its `data\`. `app/artifacts/publish/MemSweep/` is for acceptance builds only.
+- The installed copy is at `D:\Utility\MemSweep\`, outside the repository. Writing there needs the user's approval for each release. The user exits the running MemSweep first; then copy the release files over the installed copy and keep its `data\`. `app/artifacts/publish/MemSweep/` is for acceptance builds only.
 
 ## System Safety
 

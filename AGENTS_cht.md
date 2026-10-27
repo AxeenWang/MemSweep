@@ -78,7 +78,7 @@ SPEC 核准後才寫 Design，Design 核准後才寫 Development 計畫。Develo
 - 改版本號走 `release/vX.Y.Z` 分支與 pull request。
 - 使用者合併後，在 `main` 的該 merge commit 打附註 tag，並只推送這個 tag：`git tag -a vX.Y.Z -m "MemSweep X.Y.Z"` 與 `git push origin vX.Y.Z`。不建立 GitHub Release。
 - 把該 commit 發佈到全新、空的 `app/artifacts/release/vX.Y.Z/`：`(cd app && dotnet publish MemSweep.Desktop -c Release -r win-x64 --self-contained false -o artifacts/release/vX.Y.Z)` 與 `(cd app && dotnet publish MemSweep.Cli -c Release -r win-x64 --self-contained false -o artifacts/release/vX.Y.Z)`。
-- 正式版放在 repo 外的 `D:\Tools\MemSweep\`，每次寫入都要先取得使用者同意。先由使用者結束執行中的 MemSweep，再把發佈的檔案複製過去，保留既有的 `data\`。`app/artifacts/publish/MemSweep/` 只用於驗收版。
+- 正式版放在 repo 外的 `D:\Utility\MemSweep\`，每次寫入都要先取得使用者同意。先由使用者結束執行中的 MemSweep，再把發佈的檔案複製過去，保留既有的 `data\`。`app/artifacts/publish/MemSweep/` 只用於驗收版。
 
 ## 系統安全
 

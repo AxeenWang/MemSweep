@@ -294,7 +294,7 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 
 #### 正式版與驗收版
 
-- 正式版放在 `D:\Tools\MemSweep\`〔使用者決定〕，只在發佈新版本時更換。`app/artifacts/publish/MemSweep/` 只用於開發中的驗收。兩者不會同時執行（3.7）。
+- 正式版放在 `D:\Utility\MemSweep\`〔使用者決定〕，只在發佈新版本時更換。`app/artifacts/publish/MemSweep/` 只用於開發中的驗收。兩者不會同時執行（3.7）。
 - 更換正式版前，先由使用者結束執行中的 MemSweep，再把 `app/artifacts/release/vX.Y.Z/` 的檔案複製過去，保留既有的 `data\`。第一次安裝（1.0.0）時，把驗收版的 `data\` 一起複製過去，讓尖峰紀錄與設定接續。
 - `data\` 跟著 exe（F-52）。換位置時，開機自動啟動已開啟的話，新位置第一次啟動就會更新 Run 值（3.8）；沒有開啟的話，要從新位置的設定視窗勾選。
 
