@@ -21,36 +21,37 @@
     <DataTemplate x:Key="PeakRowTemplate">
       <Grid Margin="0,3">
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="120" />
-          <ColumnDefinition Width="120" />
-          <ColumnDefinition Width="84" />
-          <ColumnDefinition Width="84" />
+          <ColumnDefinition Width="Auto" SharedSizeGroup="First" />
+          <ColumnDefinition Width="Auto" SharedSizeGroup="Time" />
+          <ColumnDefinition Width="Auto" SharedSizeGroup="Commit" />
+          <ColumnDefinition Width="Auto" SharedSizeGroup="Limit" />
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <TextBlock Text="{Binding FirstText}" />
-        <TextBlock Grid.Column="1" Text="{Binding TimeText}" />
-        <TextBlock Grid.Column="2" Text="{Binding CommitText}" HorizontalAlignment="Right" />
-        <TextBlock Grid.Column="3" Text="{Binding LimitText}" Foreground="{DynamicResource MutedTextBrush}" HorizontalAlignment="Right" />
+        <TextBlock Grid.Column="1" Text="{Binding TimeText}" Margin="16,0,0,0" />
+        <TextBlock Grid.Column="2" Text="{Binding CommitText}" HorizontalAlignment="Right" Margin="16,0,0,0" />
+        <TextBlock Grid.Column="3" Text="{Binding LimitText}" Foreground="{DynamicResource MutedTextBrush}" HorizontalAlignment="Right" Margin="16,0,0,0" />
         <TextBlock Grid.Column="4" Text="{Binding TopAppsText}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap" Margin="16,0,0,0" />
       </Grid>
     </DataTemplate>
   </UserControl.Resources>
 
+  <!-- 前四欄依內容決定寬度，欄名與兩段的每一列共用同一組欄寬（IsSharedSizeScope）才會對齊；剩下的寬度都給前五名，視窗窄時也不會被擠扁 -->
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-    <StackPanel Margin="0,12,8,0">
+    <StackPanel Margin="0,12,8,0" Grid.IsSharedSizeScope="True">
       <TextBlock Text="開機尖峰" Style="{StaticResource SectionTitle}" />
       <Grid Margin="0,0,0,4">
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="120" />
-          <ColumnDefinition Width="120" />
-          <ColumnDefinition Width="84" />
-          <ColumnDefinition Width="84" />
+          <ColumnDefinition Width="Auto" SharedSizeGroup="First" />
+          <ColumnDefinition Width="Auto" SharedSizeGroup="Time" />
+          <ColumnDefinition Width="Auto" SharedSizeGroup="Commit" />
+          <ColumnDefinition Width="Auto" SharedSizeGroup="Limit" />
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <TextBlock Text="開機時間" Style="{StaticResource HeaderText}" />
-        <TextBlock Grid.Column="1" Text="尖峰時間" Style="{StaticResource HeaderText}" />
-        <TextBlock Grid.Column="2" Text="Commit 已用" Style="{StaticResource HeaderText}" HorizontalAlignment="Right" />
-        <TextBlock Grid.Column="3" Text="上限" Style="{StaticResource HeaderText}" HorizontalAlignment="Right" />
+        <TextBlock Grid.Column="1" Text="尖峰時間" Style="{StaticResource HeaderText}" Margin="16,0,0,0" />
+        <TextBlock Grid.Column="2" Text="Commit 已用" Style="{StaticResource HeaderText}" HorizontalAlignment="Right" Margin="16,0,0,0" />
+        <TextBlock Grid.Column="3" Text="上限" Style="{StaticResource HeaderText}" HorizontalAlignment="Right" Margin="16,0,0,0" />
         <TextBlock Grid.Column="4" Text="當時的前五名" Style="{StaticResource HeaderText}" Margin="16,0,0,0" />
       </Grid>
       <Border Height="1" Background="{DynamicResource PanelBorderBrush}" Margin="0,0,0,4" />
@@ -70,16 +71,16 @@
       <TextBlock Text="每日尖峰" Style="{StaticResource SectionTitle}" Margin="0,20,0,6" />
       <Grid Margin="0,0,0,4">
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="120" />
-          <ColumnDefinition Width="120" />
-          <ColumnDefinition Width="84" />
-          <ColumnDefinition Width="84" />
+          <ColumnDefinition Width="Auto" SharedSizeGroup="First" />
+          <ColumnDefinition Width="Auto" SharedSizeGroup="Time" />
+          <ColumnDefinition Width="Auto" SharedSizeGroup="Commit" />
+          <ColumnDefinition Width="Auto" SharedSizeGroup="Limit" />
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <TextBlock Text="日期" Style="{StaticResource HeaderText}" />
-        <TextBlock Grid.Column="1" Text="尖峰時間" Style="{StaticResource HeaderText}" />
-        <TextBlock Grid.Column="2" Text="Commit 已用" Style="{StaticResource HeaderText}" HorizontalAlignment="Right" />
-        <TextBlock Grid.Column="3" Text="上限" Style="{StaticResource HeaderText}" HorizontalAlignment="Right" />
+        <TextBlock Grid.Column="1" Text="尖峰時間" Style="{StaticResource HeaderText}" Margin="16,0,0,0" />
+        <TextBlock Grid.Column="2" Text="Commit 已用" Style="{StaticResource HeaderText}" HorizontalAlignment="Right" Margin="16,0,0,0" />
+        <TextBlock Grid.Column="3" Text="上限" Style="{StaticResource HeaderText}" HorizontalAlignment="Right" Margin="16,0,0,0" />
         <TextBlock Grid.Column="4" Text="當時的前五名" Style="{StaticResource HeaderText}" Margin="16,0,0,0" />
       </Grid>
       <Border Height="1" Background="{DynamicResource PanelBorderBrush}" Margin="0,0,0,4" />
