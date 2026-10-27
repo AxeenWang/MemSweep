@@ -60,6 +60,23 @@ public sealed class TitleBarTests
     }
 
     [STATestMethod]
+    [DataRow(ResizeMode.CanResize, true, true)]
+    [DataRow(ResizeMode.CanResizeWithGrip, true, true)]
+    [DataRow(ResizeMode.CanMinimize, true, false)]
+    [DataRow(ResizeMode.NoResize, false, false)]
+    public void CaptionButtonsFollowTheResizeMode(ResizeMode mode, bool minimize, bool maximize)
+    {
+        var window = NewWindow();
+
+        window.ResizeMode = mode;
+
+        Assert.AreEqual(minimize ? Visibility.Visible : Visibility.Collapsed, window.Caption.MinimizeButton.Visibility);
+        Assert.AreEqual(maximize ? Visibility.Visible : Visibility.Collapsed, window.Caption.MaximizeButton.Visibility);
+        Assert.AreEqual(Visibility.Visible, window.Caption.CloseButton.Visibility);
+        window.Close();
+    }
+
+    [STATestMethod]
     public void CaptionButtonsMaximizeRestoreAndMinimizeTheWindow()
     {
         var window = NewWindow();

@@ -42,11 +42,21 @@
 
   <DockPanel>
     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+      <!-- 按鈕跟著視窗的 ResizeMode：不能調整大小的視窗（例如設定視窗）只有關閉按鈕 -->
       <Button x:Name="MinimizeButton"
               Content="&#xE921;"
               ToolTip="最小化"
-              Style="{StaticResource CaptionButton}"
-              Click="MinimizeButton_Click" />
+              Click="MinimizeButton_Click">
+        <Button.Style>
+          <Style TargetType="Button" BasedOn="{StaticResource CaptionButton}">
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding ResizeMode, RelativeSource={RelativeSource AncestorType=Window}}" Value="NoResize">
+                <Setter Property="Visibility" Value="Collapsed" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Button.Style>
+      </Button>
       <Button x:Name="MaximizeButton" Click="MaximizeButton_Click">
         <Button.Style>
           <Style TargetType="Button" BasedOn="{StaticResource CaptionButton}">
@@ -56,6 +66,12 @@
               <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized">
                 <Setter Property="Content" Value="&#xE923;" />
                 <Setter Property="ToolTip" Value="還原" />
+              </DataTrigger>
+              <DataTrigger Binding="{Binding ResizeMode, RelativeSource={RelativeSource AncestorType=Window}}" Value="NoResize">
+                <Setter Property="Visibility" Value="Collapsed" />
+              </DataTrigger>
+              <DataTrigger Binding="{Binding ResizeMode, RelativeSource={RelativeSource AncestorType=Window}}" Value="CanMinimize">
+                <Setter Property="Visibility" Value="Collapsed" />
               </DataTrigger>
             </Style.Triggers>
           </Style>

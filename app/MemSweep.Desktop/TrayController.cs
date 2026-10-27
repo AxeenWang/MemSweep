@@ -6,7 +6,7 @@ using MemSweep.Core;
 
 namespace MemSweep.Desktop;
 
-/// <summary>系統匣圖示、提示文字、右鍵選單、小面板與完整視窗（F-01～F-24）。必須在 UI 執行緒上使用。</summary>
+/// <summary>系統匣圖示、提示文字、右鍵選單、小面板、完整視窗與設定視窗（F-01～F-24、F-50）。必須在 UI 執行緒上使用。</summary>
 internal sealed class TrayController : IDisposable
 {
     private readonly SettingsService _settings;
@@ -14,6 +14,7 @@ internal sealed class TrayController : IDisposable
     private FlyoutWindow? _flyout;
     private FullWindow? _fullWindow;
     private FullWindowModel? _fullModel;
+    private SettingsWindow? _settingsWindow;
     private bool _flyoutRequested;
     private Icon? _icon;
     private string? _iconKey;
@@ -24,12 +25,7 @@ internal sealed class TrayController : IDisposable
     {
         _settings = settings;
         _settings.Changed += OnSettingsChanged;
-        // 「設定…」在 Phase 04 加入
-        var menu = new ContextMenuStrip();
-        menu.Items.Add("開啟小面板", null, (_, _) => ShowFlyout());
-        menu.Items.Add("完整清單…", null, (_, _) => ShowFullWindow());
-        menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("結束 MemSweep", null, (_, _) => ExitRequested?.Invoke());
+        var menu = TrayMenu.Build(ShowFlyout, ShowFullWindow, ShowSettings, () => ExitRequested?.Invoke());
         _notifyIcon = new NotifyIcon { Text = "MemSweep", ContextMenuStrip = menu };
         _notifyIcon.MouseClick += (_, e) =>
         {
@@ -104,6 +100,18 @@ internal sealed class TrayController : IDisposable
         window.ShowWindow();
     }
 
+    /// <summary>開啟設定視窗；已經開著時帶到前面。</summary>
+    public void ShowSettings()
+    {
+        _flyout?.HidePanel();
+        if (_settingsWindow is null)
+        {
+            _settingsWindow = new SettingsWindow { DataContext = new SettingsForm(_settings.Current), Save = _settings.Save };
+            _settingsWindow.Closed += OnSettingsWindowClosed;
+        }
+        _settingsWindow.ShowWindow();
+    }
+
     public void Dispose()
     {
         _settings.Changed -= OnSettingsChanged;
@@ -111,6 +119,11 @@ internal sealed class TrayController : IDisposable
         {
             window.Closed -= OnFullWindowClosed;
             window.Close();
+        }
+        if (_settingsWindow is { } settingsWindow)
+        {
+            settingsWindow.Closed -= OnSettingsWindowClosed;
+            settingsWindow.Close();
         }
         _flyout?.Close();
         _notifyIcon.Visible = false;
@@ -147,15 +160,24 @@ internal sealed class TrayController : IDisposable
         return _fullWindow;
     }
 
-    // 隱藏的視窗會保留整個畫面樹，實測讓 MemSweep 超過 100 MB（Design 3.6），所以關閉時真正釋放：
-    // 等 WPF 處理完關閉的工作後，請 GC 回收並把空出來的記憶體還給系統。只回收 MemSweep 自己的記憶體。
     private void OnFullWindowClosed(object? sender, EventArgs e)
     {
         _fullWindow = null;
+        ReleaseMemoryWhenIdle();
+    }
+
+    private void OnSettingsWindowClosed(object? sender, EventArgs e)
+    {
+        _settingsWindow = null;
+        ReleaseMemoryWhenIdle();
+    }
+
+    // 隱藏的視窗會保留整個畫面樹，實測讓 MemSweep 超過 100 MB（Design 3.6），所以視窗關閉時真正釋放：
+    // 等 WPF 處理完關閉的工作後，請 GC 回收並把空出來的記憶體還給系統。只回收 MemSweep 自己的記憶體。
+    private static void ReleaseMemoryWhenIdle() =>
         Dispatcher.CurrentDispatcher.BeginInvoke(
             DispatcherPriority.ApplicationIdle,
             new Action(() => GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true)));
-    }
 
     // 圖示顏色、小面板與完整視窗立即換成新的門檻，不等下一次取樣
     private void OnSettingsChanged(AppSettings settings)
