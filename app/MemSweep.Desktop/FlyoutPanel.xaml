@@ -1,15 +1,12 @@
 <UserControl x:Class="MemSweep.Desktop.FlyoutPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:MemSweep.Desktop"
              Width="330"
              FontFamily="Segoe UI, Microsoft JhengHei UI"
              FontSize="12"
              Foreground="{DynamicResource TextBrush}">
   <UserControl.Resources>
-    <Style x:Key="FillStyle" TargetType="Border">
-      <Setter Property="CornerRadius" Value="4" />
-      <Setter Property="RenderTransformOrigin" Value="0,0.5" />
-    </Style>
     <Style x:Key="PanelButton" TargetType="Button">
       <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
       <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}" />
@@ -45,91 +42,10 @@
           CornerRadius="8"
           Padding="14,12">
     <StackPanel>
-      <!-- commit 量表：顏色依門檻（F-03） -->
-      <DockPanel>
-        <TextBlock DockPanel.Dock="Right" Text="{Binding Commit.ValueText}" />
-        <TextBlock Text="{Binding Commit.Label}" FontWeight="SemiBold" />
-      </DockPanel>
-      <Grid Height="8" Margin="0,4,0,10">
-        <Border Background="{DynamicResource TrackBrush}" CornerRadius="4" />
-        <Border>
-          <Border.Style>
-            <Style TargetType="Border" BasedOn="{StaticResource FillStyle}">
-              <Setter Property="Background" Value="{DynamicResource GreenBrush}" />
-              <Style.Triggers>
-                <DataTrigger Binding="{Binding Commit.Level}" Value="Orange">
-                  <Setter Property="Background" Value="{DynamicResource OrangeBrush}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Commit.Level}" Value="Red">
-                  <Setter Property="Background" Value="{DynamicResource RedBrush}" />
-                </DataTrigger>
-              </Style.Triggers>
-            </Style>
-          </Border.Style>
-          <Border.RenderTransform>
-            <ScaleTransform ScaleX="{Binding Commit.Fraction}" />
-          </Border.RenderTransform>
-        </Border>
-      </Grid>
+      <local:SummaryView x:Name="Summary" />
 
-      <!-- 實體 RAM 量表：固定用強調色 -->
-      <DockPanel>
-        <TextBlock DockPanel.Dock="Right" Text="{Binding Ram.ValueText}" />
-        <TextBlock Text="{Binding Ram.Label}" FontWeight="SemiBold" />
-      </DockPanel>
-      <Grid Height="8" Margin="0,4,0,10">
-        <Border Background="{DynamicResource TrackBrush}" CornerRadius="4" />
-        <Border Style="{StaticResource FillStyle}" Background="{DynamicResource AccentBrush}">
-          <Border.RenderTransform>
-            <ScaleTransform ScaleX="{Binding Ram.Fraction}" />
-          </Border.RenderTransform>
-        </Border>
-      </Grid>
-
-      <TextBlock Text="{Binding PeakText}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,8" />
-
-      <!-- 前五名與「系統（不屬於任何程式）」 -->
-      <ItemsControl ItemsSource="{Binding Rows}">
-        <ItemsControl.ItemTemplate>
-          <DataTemplate>
-            <Border x:Name="Row" Padding="0,4" BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0">
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="Auto" />
-                  <ColumnDefinition Width="80" />
-                  <ColumnDefinition Width="54" />
-                </Grid.ColumnDefinitions>
-                <TextBlock x:Name="AppName" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                <TextBlock Grid.Column="1"
-                           Text="{Binding CountText}"
-                           Foreground="{DynamicResource MutedTextBrush}"
-                           Margin="6,0,0,0" />
-                <Grid Grid.Column="2" Height="6" Margin="10,0,6,0">
-                  <Border x:Name="Bar" Background="{DynamicResource BarBrush}" CornerRadius="3" RenderTransformOrigin="0,0.5">
-                    <Border.RenderTransform>
-                      <ScaleTransform ScaleX="{Binding BarFraction}" />
-                    </Border.RenderTransform>
-                  </Border>
-                </Grid>
-                <TextBlock Grid.Column="3" Text="{Binding GigabytesText}" HorizontalAlignment="Right" />
-              </Grid>
-            </Border>
-            <DataTemplate.Triggers>
-              <DataTrigger Binding="{Binding IsUnattributed}" Value="True">
-                <Setter TargetName="AppName" Property="FontStyle" Value="Italic" />
-                <Setter TargetName="AppName" Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
-                <Setter TargetName="Bar" Property="Background" Value="{DynamicResource UnattributedBarBrush}" />
-                <Setter TargetName="Row" Property="BorderThickness" Value="0,1,0,0" />
-                <Setter TargetName="Row" Property="Margin" Value="0,4,0,0" />
-              </DataTrigger>
-            </DataTemplate.Triggers>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
-
-      <!-- 「完整清單…」在 Phase 03 加入 -->
       <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+        <Button Content="完整清單…" Style="{StaticResource PanelButton}" Click="FullListButton_Click" />
         <Button x:Name="CopyButton" Content="複製報告" Style="{StaticResource PanelButton}" Click="CopyButton_Click" />
         <Button Content="結束 MemSweep" Style="{StaticResource PanelButton}" Click="ExitButton_Click" />
       </StackPanel>

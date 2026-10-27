@@ -14,4 +14,7 @@
   <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="#383838" />
   <SolidColorBrush x:Key="ButtonHoverBrush" Color="#444444" />
   <SolidColorBrush x:Key="ButtonBorderBrush" Color="#505050" />
+  <SolidColorBrush x:Key="CloseHoverBrush" Color="#C42B1C" />
+  <SolidColorBrush x:Key="ScrollThumbBrush" Color="#5C5C5C" />
+  <SolidColorBrush x:Key="ScrollThumbHoverBrush" Color="#808080" />
 </ResourceDictionary>

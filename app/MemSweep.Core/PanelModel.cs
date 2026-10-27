@@ -8,10 +8,10 @@ public sealed record GaugeModel(string Label, string ValueText, double Fraction,
 /// <summary>小面板清單的一列；BarFraction 是相對於清單中最大一列的比例。</summary>
 public sealed record PanelRow(string Name, string CountText, string GigabytesText, double BarFraction, bool IsUnattributed);
 
-/// <summary>小面板要顯示的全部內容（F-11）。</summary>
-public sealed record PanelModel(GaugeModel Commit, GaugeModel Ram, string PeakText, IReadOnlyList<PanelRow> Rows)
+/// <summary>小面板要顯示的全部內容（F-11）；Warning 是尖峰紀錄停用的原因，沒有問題時為 null（Design 3.9）。</summary>
+public sealed record PanelModel(GaugeModel Commit, GaugeModel Ram, string PeakText, IReadOnlyList<PanelRow> Rows, string? Warning)
 {
-    public static PanelModel Build(GroupedSnapshot grouped, BootPeak? peak, UsageThresholds thresholds)
+    public static PanelModel Build(GroupedSnapshot grouped, BootPeak? peak, UsageThresholds thresholds, string? warning = null)
     {
         var s = grouped.Snapshot;
         int commitPercent = TrayText.CommitPercent(s);
@@ -43,7 +43,7 @@ public sealed record PanelModel(GaugeModel Commit, GaugeModel Ram, string PeakTe
                 true))
             .ToList();
 
-        return new PanelModel(commit, ram, DescribePeak(peak, s.Timestamp), rows);
+        return new PanelModel(commit, ram, DescribePeak(peak, s.Timestamp), rows, warning);
     }
 
     private static string GaugeText(long used, long total, int percent) =>

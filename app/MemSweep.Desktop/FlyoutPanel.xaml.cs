@@ -22,6 +22,8 @@ public partial class FlyoutPanel : UserControl
         };
     }
 
+    public event Action? FullListClicked;
+
     public event Action? CopyClicked;
 
     public event Action? ExitClicked;
@@ -33,6 +35,8 @@ public partial class FlyoutPanel : UserControl
         _copyFeedback.Stop();
         _copyFeedback.Start();
     }
+
+    private void FullListButton_Click(object sender, RoutedEventArgs e) => FullListClicked?.Invoke();
 
     private void CopyButton_Click(object sender, RoutedEventArgs e) => CopyClicked?.Invoke();
 

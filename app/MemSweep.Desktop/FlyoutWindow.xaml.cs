@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
+using MemSweep.Desktop.Native;
 
 namespace MemSweep.Desktop;
 
@@ -9,11 +11,15 @@ namespace MemSweep.Desktop;
 /// </summary>
 public partial class FlyoutWindow : Window
 {
+    private readonly DispatcherTimer _inactiveCheck;
     private DateTime _hiddenAtUtc = DateTime.MinValue;
+    private nint _foregroundAtShow;
 
     public FlyoutWindow()
     {
         InitializeComponent();
+        _inactiveCheck = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+        _inactiveCheck.Tick += (_, _) => CheckWhileInactive();
         Deactivated += (_, _) => HidePanel();
         SizeChanged += (_, _) => PlaceAtCorner();
         KeyDown += (_, e) =>
@@ -21,6 +27,7 @@ public partial class FlyoutWindow : Window
             if (e.Key == Key.Escape)
             {
                 HidePanel();
+                e.Handled = true;
             }
         };
     }
@@ -34,17 +41,36 @@ public partial class FlyoutWindow : Window
     {
         Show();
         PlaceAtCorner();
-        Activate();
+        if (!Activate())
+        {
+            // 沒有前景許可（例如由背景啟動的第二個執行個體叫出），改為定時檢查前景視窗
+            _foregroundAtShow = User32.GetForegroundWindow();
+            _inactiveCheck.Start();
+        }
     }
 
     public void HidePanel()
     {
+        _inactiveCheck.Stop();
         if (!IsVisible)
         {
             return;
         }
         Hide();
         _hiddenAtUtc = DateTime.UtcNow;
+    }
+
+    private void CheckWhileInactive()
+    {
+        switch (FlyoutPlacement.Next(IsActive, _foregroundAtShow, User32.GetForegroundWindow()))
+        {
+            case InactiveCheck.Hide:
+                HidePanel();
+                break;
+            case InactiveCheck.StopWatching:
+                _inactiveCheck.Stop();
+                break;
+        }
     }
 
     private void PlaceAtCorner()

@@ -1,3 +1,5 @@
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using System.Windows.Threading;
 using MemSweep.Desktop;
 
@@ -33,5 +35,22 @@ public sealed class SamplingFailureTests
 
         Assert.IsInstanceOfType<InvalidOperationException>(unhandled);
         Assert.IsInstanceOfType<NullReferenceException>(unhandled.InnerException);
+    }
+
+    [TestMethod]
+    public void TheDesktopNeverQueuesWorkWithInvokeAsync()
+    {
+        // InvokeAsync 會把例外收進沒人觀察的 Task，UI 執行緒的工作一律用 BeginInvoke（Design 3.4）
+        using var stream = File.OpenRead(typeof(SingleInstance).Assembly.Location);
+        using var pe = new PEReader(stream);
+        var reader = pe.GetMetadataReader();
+
+        var calls = reader.MemberReferences
+            .Select(reader.GetMemberReference)
+            .Where(m => reader.GetString(m.Name) == "InvokeAsync" && m.Parent.Kind == HandleKind.TypeReference)
+            .Select(m => reader.GetString(reader.GetTypeReference((TypeReferenceHandle)m.Parent).Name) + ".InvokeAsync")
+            .ToList();
+
+        Assert.IsEmpty(calls);
     }
 }

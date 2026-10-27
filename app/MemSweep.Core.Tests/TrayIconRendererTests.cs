@@ -74,7 +74,9 @@ public sealed class TrayIconRendererTests
         Assert.HasCount(3, colors);
     }
 
+    // 計算的是整個測試行程的 USER 物件，其他測試同時建立 WPF 元件也會增加，所以不和其他測試並行
     [TestMethod]
+    [DoNotParallelize]
     public void RenderingManyIconsDoesNotLeakHandles()
     {
         // 每 2 秒換一次圖示，漏掉 DestroyIcon 時 USER 物件會一直增加
