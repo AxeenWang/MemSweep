@@ -6,7 +6,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <UseArtifactsOutput>true</UseArtifactsOutput>
     <!-- 版本號規則見 Design 3.12；產品版本會由 SDK 自動附加建置時的 commit -->
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Product>MemSweep</Product>
   </PropertyGroup>
 </Project>
