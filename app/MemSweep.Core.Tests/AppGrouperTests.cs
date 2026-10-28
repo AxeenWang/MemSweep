@@ -26,7 +26,7 @@ public sealed class AppGrouperTests
             int? createdSecond = null)
         {
             var created = Boot.AddSeconds(createdSecond ?? pid);
-            _processes.Add(new ProcessSample(pid, parentPid, created, imageName, commitMb * Mb, commitMb * Mb / 2));
+            _processes.Add(new ProcessSample(pid, parentPid, created, imageName, commitMb * Mb, commitMb * Mb / 2, commitMb * Mb / 4));
             _infos[pid] = path is null && company is null && description is null && label is null
                 ? ProcessInfo.Unknown
                 : new ProcessInfo(path, company, description, label);

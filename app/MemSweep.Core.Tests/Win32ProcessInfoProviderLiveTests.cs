@@ -30,8 +30,8 @@ public sealed class Win32ProcessInfoProviderLiveTests
     {
         var provider = new Win32ProcessInfoProvider();
 
-        Assert.AreSame(ProcessInfo.Unknown, provider.GetInfo(new ProcessSample(0, 0, DateTime.MinValue, "Idle", 0, 0)));
-        Assert.AreSame(ProcessInfo.Unknown, provider.GetInfo(new ProcessSample(4, 0, DateTime.MinValue, "System", 0, 0)));
+        Assert.AreSame(ProcessInfo.Unknown, provider.GetInfo(new ProcessSample(0, 0, DateTime.MinValue, "Idle", 0, 0, 0)));
+        Assert.AreSame(ProcessInfo.Unknown, provider.GetInfo(new ProcessSample(4, 0, DateTime.MinValue, "System", 0, 0, 0)));
     }
 
     [TestMethod]
@@ -62,7 +62,7 @@ public sealed class Win32ProcessInfoProviderLiveTests
     public void ProcessThatCannotBeOpenedIsUnknown()
     {
         // PID 一定是 4 的倍數，3 不可能存在
-        var info = new Win32ProcessInfoProvider().GetInfo(new ProcessSample(3, 0, DateTime.MinValue, "ghost.exe", 0, 0));
+        var info = new Win32ProcessInfoProvider().GetInfo(new ProcessSample(3, 0, DateTime.MinValue, "ghost.exe", 0, 0, 0));
 
         Assert.AreSame(ProcessInfo.Unknown, info);
     }

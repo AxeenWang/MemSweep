@@ -142,7 +142,8 @@ public sealed unsafe class SystemReader : ISystemReader
                 DateTime.FromFileTimeUtc(entry->CreateTime),
                 imageName,
                 (long)entry->PagefileUsage,
-                (long)entry->WorkingSetSize));
+                (long)entry->WorkingSetSize,
+                entry->WorkingSetPrivateSize));
             if (entry->NextEntryOffset == 0)
             {
                 return processes;

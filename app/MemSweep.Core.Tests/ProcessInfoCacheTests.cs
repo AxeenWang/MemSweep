@@ -19,7 +19,7 @@ public sealed class ProcessInfoCacheTests
     }
 
     private static ProcessSample Sample(int pid, string name, DateTime created) =>
-        new(pid, 1, created, name, 0, 0);
+        new(pid, 1, created, name, 0, 0, 0);
 
     [TestMethod]
     public void QueriesEachProcessOnce()

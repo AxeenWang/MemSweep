@@ -63,6 +63,27 @@ public sealed class SystemReaderLiveTests
     }
 
     [TestMethod]
+    public void PrivateWorkingSetMatchesGetProcessMemoryInfo()
+    {
+        var snapshot = new SystemReader().Read();
+        long expected = TestNative.GetPrivateWorkingSet();
+
+        // 行程 RAM 用另一個 API 交叉比對，作為 A-11 的自動化替代；兩次查詢之間會變動，只要求相差 25% 以內
+        var self = snapshot.Processes.Single(p => p.Pid == Environment.ProcessId);
+        Assert.AreEqual((double)expected, self.PrivateWorkingSetBytes, expected * 0.25);
+    }
+
+    [TestMethod]
+    public void PrivateWorkingSetIsPartOfTheWorkingSet()
+    {
+        var snapshot = new SystemReader().Read();
+
+        var larger = snapshot.Processes.Where(p => p.PrivateWorkingSetBytes > p.WorkingSetBytes).Select(p => p.ImageName).ToList();
+        Assert.IsEmpty(larger);
+        Assert.IsGreaterThan(0L, snapshot.Processes.Sum(p => p.PrivateWorkingSetBytes));
+    }
+
+    [TestMethod]
     public void GrowsBuffersThatAreTooSmall()
     {
         var expected = new SystemReader().Read();
