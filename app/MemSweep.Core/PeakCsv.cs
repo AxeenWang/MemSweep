@@ -6,6 +6,7 @@ namespace MemSweep.Core;
 /// <summary>
 /// 尖峰紀錄 CSV 的格式（F-34、Design 3.9）：含 BOM 的 UTF-8、CRLF 換行、中文欄名，
 /// 記憶體以 GB 保留兩位小數，時間為本機時間 yyyy-MM-dd HH:mm:ss，未知時填「未知」。
+/// 名稱開頭像 Excel 公式時前面加單引號，讀回時去掉。
 /// </summary>
 public static class PeakCsv
 {
@@ -71,7 +72,7 @@ public static class PeakCsv
         }
         for (int i = 0; i < Math.Min(TopCount, topApps.Count); i++)
         {
-            fields[4 + i] = topApps[i].Name;
+            fields[4 + i] = GuardFormula(topApps[i].Name);
             fields[4 + TopCount + i] = Gigabytes(topApps[i].CommitBytes);
         }
         return fields;
@@ -101,7 +102,7 @@ public static class PeakCsv
         var apps = new List<PeakApp>();
         for (int i = 0; i < TopCount && fields[4 + i].Length > 0; i++)
         {
-            apps.Add(new PeakApp(fields[4 + i], ParseGigabytes(fields[4 + TopCount + i])));
+            apps.Add(new PeakApp(UnguardFormula(fields[4 + i]), ParseGigabytes(fields[4 + TopCount + i])));
         }
         return apps;
     }
@@ -151,6 +152,22 @@ public static class PeakCsv
         }
         return [.. Utf8WithBom.GetPreamble(), .. Utf8WithBom.GetBytes(text.ToString())];
     }
+
+    // 名稱來自各程式自訂的檔案描述或執行檔名稱；Excel 會把以這些字元開頭的儲存格當成公式（CSV injection），即使欄位有雙引號
+    private const string FormulaStarts = "=+-@\t\r\n";
+
+    /// <summary>
+    /// 名稱開頭像公式時前面加一個單引號，讓 Excel 當成文字。本來就以單引號接這些字元開頭的名稱也加，往返才不會少一個單引號。
+    /// </summary>
+    private static string GuardFormula(string name) =>
+        StartsLikeFormula(name.AsSpan().TrimStart('\'')) ? "'" + name : name;
+
+    // 去掉 GuardFormula 加上的單引號；1.0.0 寫的名稱沒有加，以公式字元開頭時照原樣讀回
+    private static string UnguardFormula(string field) =>
+        field.StartsWith('\'') && StartsLikeFormula(field.AsSpan().TrimStart('\'')) ? field[1..] : field;
+
+    private static bool StartsLikeFormula(ReadOnlySpan<char> text) =>
+        !text.IsEmpty && FormulaStarts.Contains(text[0]);
 
     private static string Escape(string field) =>
         field.AsSpan().IndexOfAny(",\"\r\n") < 0 ? field : "\"" + field.Replace("\"", "\"\"") + "\"";
