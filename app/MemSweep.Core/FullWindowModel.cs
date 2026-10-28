@@ -66,7 +66,7 @@ public sealed class FullWindowModel : ObservableObject
         {
             Place(index++, app.Name, false).Update(app);
         }
-        Place(index++, UnattributedKey, true).UpdateUnattributed(grouped.UnattributedBytes);
+        Place(index++, UnattributedKey, true).UpdateUnattributed(grouped.UnattributedCommitBytes);
 
         // 這次沒有出現的列都被擠到最後面
         while (Apps.Count > index)

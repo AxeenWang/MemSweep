@@ -46,12 +46,12 @@ public sealed class AppListRow : ObservableObject
         Name = app.Name;
         CountText = app.ProcessCount.ToString(CultureInfo.InvariantCulture);
         CommitText = FullWindowModel.Gigabytes(app.CommitBytes);
-        WorkingSetText = FullWindowModel.Gigabytes(app.WorkingSetBytes);
+        WorkingSetText = FullWindowModel.Gigabytes(app.RamBytes);
         var components = app.Components
             .Select(c => new ComponentRow(
                 c.Name + " ×" + c.ProcessCount.ToString(CultureInfo.InvariantCulture),
                 FullWindowModel.Gigabytes(c.CommitBytes),
-                FullWindowModel.Gigabytes(c.WorkingSetBytes)))
+                FullWindowModel.Gigabytes(c.RamBytes)))
             .ToList();
         // 內容沒變就保留原本的清單，展開的明細才不會重建
         if (!components.SequenceEqual(Components))

@@ -27,7 +27,7 @@ public sealed record PanelModel(GaugeModel Commit, GaugeModel Ram, string PeakTe
             null);
 
         var top = grouped.Apps.Take(ReportFormatter.TopCount).ToList();
-        long largest = Math.Max(grouped.UnattributedBytes, top.Count == 0 ? 0 : top.Max(a => a.CommitBytes));
+        long largest = Math.Max(grouped.UnattributedCommitBytes, top.Count == 0 ? 0 : top.Max(a => a.CommitBytes));
         var rows = top
             .Select(a => new PanelRow(
                 a.Name,
@@ -38,8 +38,8 @@ public sealed record PanelModel(GaugeModel Commit, GaugeModel Ram, string PeakTe
             .Append(new PanelRow(
                 GroupedSnapshot.UnattributedName,
                 string.Empty,
-                MemoryMath.FormatGigabytes(grouped.UnattributedBytes) + " GB",
-                Fraction(grouped.UnattributedBytes, largest),
+                MemoryMath.FormatGigabytes(grouped.UnattributedCommitBytes) + " GB",
+                Fraction(grouped.UnattributedCommitBytes, largest),
                 true))
             .ToList();
 

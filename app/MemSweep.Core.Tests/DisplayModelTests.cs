@@ -100,7 +100,7 @@ public sealed class DisplayModelTests
     public void PanelRowsWithNothingToCompareHaveEmptyBars()
     {
         var typical = ReportSamples.Typical();
-        var empty = typical with { Apps = [], UnattributedBytes = 0 };
+        var empty = typical with { Apps = [], UnattributedCommitBytes = 0 };
 
         var panel = PanelModel.Build(empty, null, UsageThresholds.Default);
 

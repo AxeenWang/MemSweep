@@ -23,17 +23,19 @@ public sealed class AppGrouperTests
             string? company = null,
             string? description = null,
             string? label = null,
-            int? createdSecond = null)
+            int? createdSecond = null,
+            long? ramMb = null)
         {
             var created = Boot.AddSeconds(createdSecond ?? pid);
-            _processes.Add(new ProcessSample(pid, parentPid, created, imageName, commitMb * Mb, commitMb * Mb / 2, commitMb * Mb / 4));
+            // 工作集與 RAM 刻意給不同的值，才分得出程式用的是哪一個
+            _processes.Add(new ProcessSample(pid, parentPid, created, imageName, commitMb * Mb, commitMb * Mb / 2, (ramMb ?? commitMb / 4) * Mb));
             _infos[pid] = path is null && company is null && description is null && label is null
                 ? ProcessInfo.Unknown
                 : new ProcessInfo(path, company, description, label);
             return this;
         }
 
-        public GroupedSnapshot Group(long commitUsedMb = 100_000)
+        public GroupedSnapshot Group(long commitUsedMb = 100_000, long physicalAvailableMb = 16_384)
         {
             var snapshot = new SystemSnapshot(
                 new DateTimeOffset(2026, 10, 26, 14, 35, 2, TimeSpan.FromHours(8)),
@@ -42,7 +44,7 @@ public sealed class AppGrouperTests
                 200_000 * Mb,
                 150_000 * Mb,
                 32_768 * Mb,
-                16_384 * Mb,
+                physicalAvailableMb * Mb,
                 8_192 * Mb,
                 _processes);
             return new AppGrouper(@"C:\Windows").Group(snapshot, _infos);
@@ -263,8 +265,51 @@ public sealed class AppGrouperTests
             .Add(1100, 9999, "a.exe", 300, @"C:\A\a.exe", "A Corp", "A")
             .Add(1110, 9999, "b.exe", 200, @"C:\B\b.exe", "B Corp", "B");
 
-        Assert.AreEqual(1_500 * Mb, fixture.Group(commitUsedMb: 2_000).UnattributedBytes);
-        Assert.AreEqual(0L, fixture.Group(commitUsedMb: 400).UnattributedBytes);
+        Assert.AreEqual(1_500 * Mb, fixture.Group(commitUsedMb: 2_000).UnattributedCommitBytes);
+        Assert.AreEqual(0L, fixture.Group(commitUsedMb: 400).UnattributedCommitBytes);
+    }
+
+    [TestMethod]
+    public void AppsAndComponentsAddUpCommitAndRam()
+    {
+        var grouped = new Fixture()
+            .Add(1200, 9999, "claude.exe", 300, @"C:\Claude\claude.exe", "Anthropic", "Claude", ramMb: 120)
+            .Add(1210, 1200, "claude.exe", 100, @"C:\Claude\claude.exe", "Anthropic", "Claude", ramMb: 70)
+            .Add(1220, 1200, "node.exe", 50, @"C:\node\node.exe", "OpenJS", "Node.js", ramMb: 40)
+            .Group();
+
+        var claude = Row(grouped, "Claude");
+        Assert.AreEqual(450 * Mb, claude.CommitBytes);
+        Assert.AreEqual(230 * Mb, claude.RamBytes);
+        CollectionAssert.AreEqual(
+            new[] { new AppComponent("claude.exe", 2, 400 * Mb, 190 * Mb), new AppComponent("node.exe", 1, 50 * Mb, 40 * Mb) },
+            claude.Components.ToArray());
+    }
+
+    [TestMethod]
+    public void UnattributedRamIsRamInUseMinusAllProcessRam()
+    {
+        // 實體 RAM 32768 MB，兩個行程的 RAM 合計 250 MB
+        var fixture = new Fixture()
+            .Add(1300, 9999, "a.exe", 300, @"C:\A\a.exe", "A Corp", "A", ramMb: 150)
+            .Add(1310, 9999, "b.exe", 200, @"C:\B\b.exe", "B Corp", "B", ramMb: 100);
+
+        Assert.AreEqual(1_750 * Mb, fixture.Group(physicalAvailableMb: 32_768 - 2_000).UnattributedRamBytes);
+        Assert.AreEqual(0L, fixture.Group(physicalAvailableMb: 32_768 - 200).UnattributedRamBytes);
+    }
+
+    [TestMethod]
+    public void AppsByRamOrdersByRamWhileAppsKeepTheCommitOrder()
+    {
+        var grouped = new Fixture()
+            .Add(1400, 9999, "game.exe", 300, @"C:\Game\game.exe", "Game Corp", "Game", ramMb: 50)
+            .Add(1410, 9999, "edge.exe", 100, @"C:\Edge\edge.exe", "Edge Corp", "Edge", ramMb: 200)
+            .Add(1420, 9999, "chat.exe", 80, @"C:\Chat\chat.exe", "Chat Corp", "Chat", ramMb: 200)
+            .Group();
+
+        CollectionAssert.AreEqual(new[] { "Game", "Edge", "Chat" }, grouped.Apps.Select(a => a.Name).ToArray());
+        // RAM 相同時依名稱排序
+        CollectionAssert.AreEqual(new[] { "Chat", "Edge", "Game" }, grouped.AppsByRam.Select(a => a.Name).ToArray());
     }
 
     [TestMethod]
