@@ -34,31 +34,43 @@ public sealed class DisplayModelTests
     }
 
     [TestMethod]
-    public void TrayIconTextIsTheCommitPercent()
+    public void TrayIconTextIsTheRamPercent()
     {
+        // RAM 20.5 / 31.4 GB 是 65%，commit 31.4 / 39.4 GB 是 80%
         var snapshot = ReportSamples.Typical().Snapshot;
 
+        Assert.AreEqual(65, TrayText.RamPercent(snapshot));
         Assert.AreEqual(80, TrayText.CommitPercent(snapshot));
-        Assert.AreEqual("80", TrayText.IconText(snapshot));
+        Assert.AreEqual("65", TrayText.IconText(snapshot));
     }
 
     [TestMethod]
     public void TrayIconTextNeverExceeds100()
     {
         var snapshot = ReportSamples.Typical().Snapshot;
-        var full = snapshot with { CommitUsedBytes = snapshot.CommitLimitBytes };
-        var over = snapshot with { CommitUsedBytes = snapshot.CommitLimitBytes + MemoryMath.BytesPerGigabyte };
+        var full = snapshot with { PhysicalAvailableBytes = 0 };
+        var over = snapshot with { PhysicalAvailableBytes = -MemoryMath.BytesPerGigabyte };
 
         Assert.AreEqual("100", TrayText.IconText(full));
         Assert.AreEqual("100", TrayText.IconText(over));
     }
 
     [TestMethod]
-    public void TooltipShowsCommitAndRam()
+    public void TrayIconColorFollowsTheRamPercent()
+    {
+        // RAM 65%、commit 80%：依 RAM 是綠色與橘色，依 commit 會是橘色與紅色
+        var snapshot = ReportSamples.Typical().Snapshot;
+
+        Assert.AreEqual(UsageLevel.Green, TrayText.IconLevel(snapshot, UsageThresholds.Default));
+        Assert.AreEqual(UsageLevel.Orange, TrayText.IconLevel(snapshot, new UsageThresholds(60, 75)));
+    }
+
+    [TestMethod]
+    public void TooltipShowsRamThenCommit()
     {
         string tooltip = TrayText.Tooltip(ReportSamples.Typical().Snapshot);
 
-        Assert.AreEqual("MemSweep\nCommit 31.4 / 39.4 GB（80%）\nRAM 20.5 / 31.4 GB", tooltip);
+        Assert.AreEqual("MemSweep\nRAM 20.5 / 31.4 GB（65%）\nCommit 31.4 / 39.4 GB（80%）", tooltip);
         Assert.IsLessThanOrEqualTo(127, tooltip.Length);
     }
 

@@ -88,7 +88,7 @@
     <DockPanel>
       <local:TitleBar x:Name="Caption" DockPanel.Dock="Top" />
       <StackPanel Margin="20,8,20,20">
-        <TextBlock Text="commit 使用率的顏色" FontWeight="SemiBold" />
+        <TextBlock Text="RAM 使用率的顏色" FontWeight="SemiBold" />
         <Grid Margin="0,8,0,0">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />

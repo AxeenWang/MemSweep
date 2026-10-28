@@ -57,7 +57,7 @@ internal sealed class TrayController : IDisposable
     {
         var snapshot = grouped.Snapshot;
         string text = TrayText.IconText(snapshot);
-        var level = _settings.Current.Thresholds.LevelOf(TrayText.CommitPercent(snapshot));
+        var level = TrayText.IconLevel(snapshot, _settings.Current.Thresholds);
         int size = SystemInformation.SmallIconSize.Width;
 
         // 數字、顏色與尺寸都沒變就不重畫

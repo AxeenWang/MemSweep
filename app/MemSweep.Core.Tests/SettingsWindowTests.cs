@@ -28,7 +28,7 @@ public sealed class SettingsWindowTests
         var window = NewWindow(new AppSettings(60, 90, true, 30));
 
         CollectionAssert.IsSubsetOf(
-            new[] { "MemSweep 設定", "橘色門檻", "紅色門檻", "保留天數", "開機時自動啟動 MemSweep", "儲存", "取消" },
+            new[] { "MemSweep 設定", "RAM 使用率的顏色", "橘色門檻", "紅色門檻", "保留天數", "開機時自動啟動 MemSweep", "儲存", "取消" },
             WpfLayout.Texts((DependencyObject)window.Content));
         Assert.AreEqual("60", window.OrangeBox.Text);
         Assert.AreEqual("90", window.RedBox.Text);

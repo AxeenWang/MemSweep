@@ -36,6 +36,16 @@ public sealed class SystemReaderLiveTests
     }
 
     [TestMethod]
+    public void RamPercentMatchesTheMemoryLoad()
+    {
+        var snapshot = new SystemReader().Read();
+        var status = TestNative.GetMemoryStatus();
+
+        // A-10 的自動化替代：dwMemoryLoad 是 Windows 算的 RAM 使用率（無條件捨去），MemSweep 四捨五入，最多相差 1
+        Assert.AreEqual((double)status.MemoryLoad, TrayText.RamPercent(snapshot), 1.0);
+    }
+
+    [TestMethod]
     public void CommitLimitIsPhysicalMemoryPlusPageFiles()
     {
         var snapshot = new SystemReader().Read();
