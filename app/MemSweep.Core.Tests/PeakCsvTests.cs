@@ -153,6 +153,67 @@ public sealed class PeakCsvTests
         CollectionAssert.AreEqual(apps, PeakCsv.ReadDays(bytes, Zone)[0].TopApps.ToArray());
     }
 
+    // 名稱來自各程式自訂的檔案描述或執行檔名稱；Excel 會把 = + - @ Tab CR LF 開頭的儲存格當成公式，即使欄位有雙引號
+    [TestMethod]
+    [DataRow("=1+2", "'=1+2")]
+    [DataRow("+1", "'+1")]
+    [DataRow("-1", "'-1")]
+    [DataRow("@SUM(1)", "'@SUM(1)")]
+    [DataRow("\tcmd", "'\tcmd")]
+    [DataRow("\rcmd", "\"'\rcmd\"")]
+    [DataRow("\ncmd", "\"'\ncmd\"")]
+    [DataRow("=HYPERLINK(\"http://x\")", "\"'=HYPERLINK(\"\"http://x\"\")\"")]
+    [DataRow("'=1+2", "''=1+2")]
+    [DataRow("''-1", "'''-1")]
+    public void NamesThatStartLikeFormulasGetALeadingApostrophe(string name, string field)
+    {
+        var day = new DailyPeak(new DateOnly(2026, 10, 26), Gb(31.4), Gb(39.4), PeakTime, [new PeakApp(name, Gb(1.0))]);
+
+        string text = Text(PeakCsv.WriteDays([day], Zone));
+
+        Assert.AreEqual(DailyHeader + "\r\n" + "2026-10-26,2026-10-26 14:35:02,31.40,39.40," + field + ",,,,,1.00,,,,\r\n", text);
+    }
+
+    [TestMethod]
+    public void NamesThatStartLikeFormulasRoundTrip()
+    {
+        // 紀錄檔每次啟動會讀回，讀回時要去掉寫入時加上的單引號
+        PeakApp[] bootApps = [new("=1+2", Gb(1.0)), new("+1", Gb(0.9)), new("-1", Gb(0.8)), new("@SUM(1)", Gb(0.7)), new("\tcmd", Gb(0.6))];
+        PeakApp[] dayApps = [new("\rcmd", Gb(1.0)), new("\ncmd", Gb(0.9)), new("'=1+2", Gb(0.8)), new("''-1", Gb(0.7)), new("=HYPERLINK(\"http://x\")", Gb(0.6))];
+
+        var boot = PeakCsv.ReadBoots(PeakCsv.WriteBoots([new BootPeak(Boot, Gb(36.8), Gb(39.4), PeakTime, bootApps)], Zone), Zone).Single();
+        var day = PeakCsv.ReadDays(PeakCsv.WriteDays([new DailyPeak(new DateOnly(2026, 10, 26), Gb(31.4), Gb(39.4), PeakTime, dayApps)], Zone), Zone).Single();
+
+        CollectionAssert.AreEqual(bootApps, boot.TopApps!.ToArray());
+        CollectionAssert.AreEqual(dayApps, day.TopApps.ToArray());
+    }
+
+    [TestMethod]
+    public void ReadsFormulaNamesWrittenByOlderVersions()
+    {
+        // 1.0.0 原樣寫出公式開頭的名稱，沒有加單引號；讀回時照舊
+        byte[] content = Utf8(DailyHeader + "\r\n" + "2026-10-26,2026-10-26 14:35:02,31.40,39.40,=SUM(1),-1,,,,1.00,0.90,,,\r\n");
+
+        var apps = PeakCsv.ReadDays(content, Zone).Single().TopApps;
+
+        CollectionAssert.AreEqual(new[] { new PeakApp("=SUM(1)", Gb(1.0)), new PeakApp("-1", Gb(0.9)) }, apps.ToArray());
+    }
+
+    [TestMethod]
+    public void OtherNamesAreWrittenAndReadAsIs()
+    {
+        // 單引號後面不是公式開頭、或 = - 不在開頭的名稱，不加也不去掉單引號
+        PeakApp[] apps = [new("'abc", Gb(1.0)), new("'", Gb(0.9)), new("a=b", Gb(0.8)), new("Tool -x", Gb(0.7)), new("Claude", Gb(0.6))];
+        var day = new DailyPeak(new DateOnly(2026, 10, 26), Gb(31.4), Gb(39.4), PeakTime, apps);
+
+        byte[] bytes = PeakCsv.WriteDays([day], Zone);
+
+        Assert.AreEqual(
+            DailyHeader + "\r\n" + "2026-10-26,2026-10-26 14:35:02,31.40,39.40,'abc,',a=b,Tool -x,Claude,1.00,0.90,0.80,0.70,0.60\r\n",
+            Text(bytes));
+        CollectionAssert.AreEqual(apps, PeakCsv.ReadDays(bytes, Zone)[0].TopApps.ToArray());
+    }
+
     [TestMethod]
     public void HeaderOnlyIsEmpty()
     {
