@@ -36,6 +36,16 @@ public sealed class SystemReaderLiveTests
     }
 
     [TestMethod]
+    public void RamPercentMatchesTheMemoryLoad()
+    {
+        var snapshot = new SystemReader().Read();
+        var status = TestNative.GetMemoryStatus();
+
+        // A-10 的自動化替代：dwMemoryLoad 是 Windows 算的 RAM 使用率（無條件捨去），MemSweep 四捨五入，最多相差 1
+        Assert.AreEqual((double)status.MemoryLoad, TrayText.RamPercent(snapshot), 1.0);
+    }
+
+    [TestMethod]
     public void CommitLimitIsPhysicalMemoryPlusPageFiles()
     {
         var snapshot = new SystemReader().Read();
@@ -60,6 +70,27 @@ public sealed class SystemReaderLiveTests
         Assert.AreEqual((double)current.PrivateMemorySize64, self.PrivateCommitBytes, current.PrivateMemorySize64 * 0.25);
         Assert.IsGreaterThan(0L, self.WorkingSetBytes);
         Assert.IsLessThan(1.0, Math.Abs((current.StartTime.ToUniversalTime() - self.CreateTimeUtc).TotalSeconds));
+    }
+
+    [TestMethod]
+    public void PrivateWorkingSetMatchesGetProcessMemoryInfo()
+    {
+        var snapshot = new SystemReader().Read();
+        long expected = TestNative.GetPrivateWorkingSet();
+
+        // 行程 RAM 用另一個 API 交叉比對，作為 A-11 的自動化替代；兩次查詢之間會變動，只要求相差 25% 以內
+        var self = snapshot.Processes.Single(p => p.Pid == Environment.ProcessId);
+        Assert.AreEqual((double)expected, self.PrivateWorkingSetBytes, expected * 0.25);
+    }
+
+    [TestMethod]
+    public void PrivateWorkingSetIsPartOfTheWorkingSet()
+    {
+        var snapshot = new SystemReader().Read();
+
+        var larger = snapshot.Processes.Where(p => p.PrivateWorkingSetBytes > p.WorkingSetBytes).Select(p => p.ImageName).ToList();
+        Assert.IsEmpty(larger);
+        Assert.IsGreaterThan(0L, snapshot.Processes.Sum(p => p.PrivateWorkingSetBytes));
     }
 
     [TestMethod]

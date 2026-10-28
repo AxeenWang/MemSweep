@@ -43,6 +43,7 @@ public sealed class AppGrouper
         var topOf = new Dictionary<int, int>(snapshot.Processes.Count);
         var builders = new Dictionary<string, GroupBuilder>(StringComparer.OrdinalIgnoreCase);
         long processCommit = 0;
+        long processRam = 0;
         foreach (var process in snapshot.Processes)
         {
             var top = byPid[FindTop(process, byPid, infos, topOf)];
@@ -58,6 +59,7 @@ public sealed class AppGrouper
             }
             builder.Add(process, InfoOf(infos, process.Pid));
             processCommit += process.PrivateCommitBytes;
+            processRam += process.PrivateWorkingSetBytes;
         }
 
         var apps = builders.Values
@@ -65,7 +67,11 @@ public sealed class AppGrouper
             .OrderByDescending(a => a.CommitBytes)
             .ThenBy(a => a.Name, StringComparer.Ordinal)
             .ToList();
-        return new GroupedSnapshot(snapshot, apps, Math.Max(0, snapshot.CommitUsedBytes - processCommit));
+        return new GroupedSnapshot(
+            snapshot,
+            apps,
+            Math.Max(0, snapshot.CommitUsedBytes - processCommit),
+            Math.Max(0, snapshot.PhysicalUsedBytes - processRam));
     }
 
     /// <summary>公司名稱的第一個單字（連續的字母或數字），轉小寫；取不到時回傳 null。</summary>
@@ -172,17 +178,17 @@ public sealed class AppGrouper
 
     private sealed class GroupBuilder(string name, bool isWindows)
     {
-        private readonly Dictionary<string, (string Name, int Count, long Commit, long WorkingSet)> _components =
+        private readonly Dictionary<string, (string Name, int Count, long Commit, long Ram)> _components =
             new(StringComparer.OrdinalIgnoreCase);
         private int _count;
         private long _commit;
-        private long _workingSet;
+        private long _ram;
 
         public void Add(ProcessSample process, ProcessInfo info)
         {
             _count++;
             _commit += process.PrivateCommitBytes;
-            _workingSet += process.WorkingSetBytes;
+            _ram += process.PrivateWorkingSetBytes;
 
             // 明細依執行檔名稱合併；node 再依套件標籤區分（F-23）
             string componentName = info.PackageLabel is { } label
@@ -194,7 +200,7 @@ public sealed class AppGrouper
                 c.Name ?? componentName,
                 c.Count + 1,
                 c.Commit + process.PrivateCommitBytes,
-                c.WorkingSet + process.WorkingSetBytes);
+                c.Ram + process.PrivateWorkingSetBytes);
         }
 
         public AppGroup Build() => new(
@@ -202,9 +208,9 @@ public sealed class AppGrouper
             isWindows,
             _count,
             _commit,
-            _workingSet,
+            _ram,
             _components.Values
-                .Select(c => new AppComponent(c.Name, c.Count, c.Commit, c.WorkingSet))
+                .Select(c => new AppComponent(c.Name, c.Count, c.Commit, c.Ram))
                 .OrderByDescending(c => c.CommitBytes)
                 .ThenBy(c => c.Name, StringComparer.Ordinal)
                 .ToList());

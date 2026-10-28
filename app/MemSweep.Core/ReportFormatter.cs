@@ -75,7 +75,7 @@ public static class ReportFormatter
                 json.WriteEndObject();
             }
             json.WriteEndArray();
-            json.WriteNumber("unattributedBytes", grouped.UnattributedBytes);
+            json.WriteNumber("unattributedBytes", grouped.UnattributedCommitBytes);
             json.WriteEndObject();
         }
         return Encoding.UTF8.GetString(buffer.WrittenSpan) + "\n";
@@ -89,7 +89,7 @@ public static class ReportFormatter
             text.Append("  ").Append(app.Name).Append("  ").Append(app.ProcessCount)
                 .Append(" 個行程  ").Append(Gb(app.CommitBytes)).Append(" GB\n");
         }
-        text.Append(GroupedSnapshot.UnattributedName).Append("  ").Append(Gb(grouped.UnattributedBytes)).Append(" GB\n");
+        text.Append(GroupedSnapshot.UnattributedName).Append("  ").Append(Gb(grouped.UnattributedCommitBytes)).Append(" GB\n");
     }
 
     private static string Gb(long bytes) => MemoryMath.FormatGigabytes(bytes);

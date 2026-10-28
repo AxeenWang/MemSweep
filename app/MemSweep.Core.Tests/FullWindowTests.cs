@@ -29,6 +29,10 @@ public sealed class FullWindowTests
         return model;
     }
 
+    // 文字所在的欄；畫面上的左右順序看欄，不看元素的先後
+    private static int ColumnOf(DependencyObject root, string text) =>
+        Grid.GetColumn(WpfLayout.Descendants(root).OfType<TextBlock>().Single(t => t.Text == text));
+
     [STATestMethod]
     public void AppsViewListsEveryAppUnderTheColumnHeaders()
     {
@@ -36,9 +40,12 @@ public sealed class FullWindowTests
 
         var texts = WpfLayout.Texts(view);
         CollectionAssert.IsSubsetOf(
-            new[] { "名稱", "行程數", "Commit", "實際 RAM", "Claude", "36", "3.2 GB", "1.6 GB", "Microsoft Edge", GroupedSnapshot.UnattributedName, "6.9 GB" },
+            new[] { "名稱", "行程數", "RAM", "Commit", "Claude", "36", "1.6 GB", "3.2 GB", "Microsoft Edge", GroupedSnapshot.UnattributedName, "12.3 GB", "6.9 GB" },
             texts);
         CollectionAssert.DoesNotContain(texts, "claude.exe ×14");
+        // RAM 欄在 commit 欄之前：標題與 Claude 那一列都是
+        Assert.IsLessThan(ColumnOf(view, "Commit"), ColumnOf(view, "RAM"));
+        Assert.IsLessThan(ColumnOf(view, "3.2 GB"), ColumnOf(view, "1.6 GB"));
     }
 
     [STATestMethod]
@@ -46,12 +53,15 @@ public sealed class FullWindowTests
     {
         var model = ModelWithComponents();
         var view = WpfLayout.LaidOut(new AppsView { DataContext = model }, 700);
+        var claude = model.Apps.Single(a => a.Name == "Claude");
 
-        WpfLayout.Descendants(view).OfType<ToggleButton>().First().IsChecked = true;
+        WpfLayout.Descendants(view).OfType<ToggleButton>().Single(t => t.DataContext == claude).IsChecked = true;
         view.UpdateLayout();
 
-        Assert.IsTrue(model.Apps[0].IsExpanded);
-        CollectionAssert.IsSubsetOf(new[] { "claude.exe ×14", "2.0 GB", "1.0 GB", "node：@playwright/mcp ×2" }, WpfLayout.Texts(view));
+        Assert.IsTrue(claude.IsExpanded);
+        var texts = WpfLayout.Texts(view);
+        CollectionAssert.IsSubsetOf(new[] { "claude.exe ×14", "1.0 GB", "2.0 GB", "node：@playwright/mcp ×2" }, texts);
+        Assert.IsLessThan(ColumnOf(view, "2.0 GB"), ColumnOf(view, "1.0 GB"));
     }
 
     [STATestMethod]
@@ -61,8 +71,10 @@ public sealed class FullWindowTests
 
         var toggles = WpfLayout.Descendants(view).OfType<ToggleButton>().ToList();
 
+        // 依 RAM 排序後 Claude 是第二列，只有它有明細
         Assert.HasCount(7, toggles);
-        Assert.AreEqual(Visibility.Visible, toggles[0].Visibility);
+        Assert.AreEqual(Visibility.Hidden, toggles[0].Visibility);
+        Assert.AreEqual(Visibility.Visible, toggles[1].Visibility);
         Assert.AreEqual(Visibility.Hidden, toggles[6].Visibility);
     }
 

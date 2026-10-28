@@ -9,10 +9,10 @@ internal static class ReportSamples
 
     private static long Gb(double value) => MemoryMath.FromGigabytes(value);
 
-    private static AppGroup App(string name, int count, double commitGb, bool isWindows = false) =>
-        new(name, isWindows, count, Gb(commitGb), Gb(commitGb) / 2, Array.Empty<AppComponent>());
+    private static AppGroup App(string name, int count, double commitGb, double ramGb, bool isWindows = false) =>
+        new(name, isWindows, count, Gb(commitGb), Gb(ramGb), Array.Empty<AppComponent>());
 
-    /// <summary>commit 31.4 / 39.4 GB、RAM 20.5 / 31.4 GB、尖峰 36.8 GB，六個應用程式。</summary>
+    /// <summary>commit 31.4 / 39.4 GB、RAM 20.5 / 31.4 GB、尖峰 36.8 GB，六個應用程式；依 RAM 的順序和依 commit 的不同。</summary>
     public static GroupedSnapshot Typical()
     {
         var snapshot = new SystemSnapshot(
@@ -27,14 +27,14 @@ internal static class ReportSamples
             Array.Empty<ProcessSample>());
         var apps = new[]
         {
-            App("Claude", 36, 3.2),
-            App("ChatGPT", 13, 2.2),
-            App("Microsoft Edge WebView2", 19, 1.8),
-            App(AppGrouper.WindowsGroupName, 140, 1.5, isWindows: true),
-            App("Node.js JavaScript Runtime", 30, 1.4),
-            App("Microsoft Edge", 16, 1.3),
+            App("Claude", 36, 3.2, 1.6),
+            App("ChatGPT", 13, 2.2, 0.9),
+            App("Microsoft Edge WebView2", 19, 1.8, 1.2),
+            App(AppGrouper.WindowsGroupName, 140, 1.5, 2.4, isWindows: true),
+            App("Node.js JavaScript Runtime", 30, 1.4, 0.7),
+            App("Microsoft Edge", 16, 1.3, 1.4),
         };
-        return new GroupedSnapshot(snapshot, apps, Gb(6.9));
+        return new GroupedSnapshot(snapshot, apps, Gb(6.9), Gb(12.3));
     }
 
     /// <summary>只有兩個應用程式的快照。</summary>

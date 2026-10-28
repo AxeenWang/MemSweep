@@ -12,10 +12,13 @@ public sealed class MemorySamplerLiveTests
         var grouped = MemorySampler.CreateDefault().Sample();
         var processes = grouped.Snapshot.Processes;
         long processCommit = processes.Sum(p => p.PrivateCommitBytes);
+        long processRam = processes.Sum(p => p.PrivateWorkingSetBytes);
 
         Assert.AreEqual(processes.Count, grouped.Apps.Sum(a => a.ProcessCount));
         Assert.AreEqual(processCommit, grouped.Apps.Sum(a => a.CommitBytes));
-        Assert.AreEqual(Math.Max(0, grouped.Snapshot.CommitUsedBytes - processCommit), grouped.UnattributedBytes);
+        Assert.AreEqual(Math.Max(0, grouped.Snapshot.CommitUsedBytes - processCommit), grouped.UnattributedCommitBytes);
+        Assert.AreEqual(processRam, grouped.Apps.Sum(a => a.RamBytes));
+        Assert.AreEqual(Math.Max(0, grouped.Snapshot.PhysicalUsedBytes - processRam), grouped.UnattributedRamBytes);
     }
 
     [TestMethod]

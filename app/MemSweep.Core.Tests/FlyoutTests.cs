@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using MemSweep.Core;
 using MemSweep.Desktop;
 
@@ -58,16 +59,16 @@ public sealed class FlyoutTests
         CollectionAssert.IsSubsetOf(
             new[]
             {
-                "Commit",
-                "31.4 / 39.4 GB（80%）",
                 "實體 RAM",
                 "20.5 / 31.4 GB（65%）",
+                "Commit",
+                "31.4 / 39.4 GB（80%）",
                 "開機以來 commit 尖峰：36.8 GB（12:10）",
                 "Claude",
                 "36",
-                "3.2 GB",
+                "1.6 GB",
                 "系統（不屬於任何程式）",
-                "6.9 GB",
+                "12.3 GB",
             },
             texts);
         var buttons = WpfLayout.Descendants(panel).OfType<Button>().Select(b => b.Content as string).ToList();
@@ -94,5 +95,18 @@ public sealed class FlyoutTests
         var rows = WpfLayout.Descendants(panel).OfType<ContentPresenter>().Where(c => c.Content is PanelRow).ToList();
 
         Assert.HasCount(6, rows);
+    }
+
+    [STATestMethod]
+    public void TheRamGaugeComesFirstAndIsTheOneColoredByTheThresholds()
+    {
+        var panel = LaidOutPanel(PanelModel.Build(ReportSamples.Typical(), null, UsageThresholds.Default));
+
+        var texts = WpfLayout.Texts(panel.Summary);
+        Assert.IsLessThan(texts.IndexOf("Commit"), texts.IndexOf("實體 RAM"));
+        // 只有一個量表依門檻變色，而且看的是 RAM
+        var colored = WpfLayout.Descendants(panel.Summary).OfType<Border>().Single(b => b.Style is { Triggers.Count: > 0 });
+        var paths = colored.Style.Triggers.OfType<DataTrigger>().Select(t => ((Binding)t.Binding).Path.Path).Distinct().ToArray();
+        CollectionAssert.AreEqual(new[] { "Ram.Level" }, paths);
     }
 }

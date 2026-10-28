@@ -34,63 +34,76 @@ public sealed class DisplayModelTests
     }
 
     [TestMethod]
-    public void TrayIconTextIsTheCommitPercent()
+    public void TrayIconTextIsTheRamPercent()
     {
+        // RAM 20.5 / 31.4 GB 是 65%，commit 31.4 / 39.4 GB 是 80%
         var snapshot = ReportSamples.Typical().Snapshot;
 
+        Assert.AreEqual(65, TrayText.RamPercent(snapshot));
         Assert.AreEqual(80, TrayText.CommitPercent(snapshot));
-        Assert.AreEqual("80", TrayText.IconText(snapshot));
+        Assert.AreEqual("65", TrayText.IconText(snapshot));
     }
 
     [TestMethod]
     public void TrayIconTextNeverExceeds100()
     {
         var snapshot = ReportSamples.Typical().Snapshot;
-        var full = snapshot with { CommitUsedBytes = snapshot.CommitLimitBytes };
-        var over = snapshot with { CommitUsedBytes = snapshot.CommitLimitBytes + MemoryMath.BytesPerGigabyte };
+        var full = snapshot with { PhysicalAvailableBytes = 0 };
+        var over = snapshot with { PhysicalAvailableBytes = -MemoryMath.BytesPerGigabyte };
 
         Assert.AreEqual("100", TrayText.IconText(full));
         Assert.AreEqual("100", TrayText.IconText(over));
     }
 
     [TestMethod]
-    public void TooltipShowsCommitAndRam()
+    public void TrayIconColorFollowsTheRamPercent()
+    {
+        // RAM 65%、commit 80%：依 RAM 是綠色與橘色，依 commit 會是橘色與紅色
+        var snapshot = ReportSamples.Typical().Snapshot;
+
+        Assert.AreEqual(UsageLevel.Green, TrayText.IconLevel(snapshot, UsageThresholds.Default));
+        Assert.AreEqual(UsageLevel.Orange, TrayText.IconLevel(snapshot, new UsageThresholds(60, 75)));
+    }
+
+    [TestMethod]
+    public void TooltipShowsRamThenCommit()
     {
         string tooltip = TrayText.Tooltip(ReportSamples.Typical().Snapshot);
 
-        Assert.AreEqual("MemSweep\nCommit 31.4 / 39.4 GB（80%）\nRAM 20.5 / 31.4 GB", tooltip);
+        Assert.AreEqual("MemSweep\nRAM 20.5 / 31.4 GB（65%）\nCommit 31.4 / 39.4 GB（80%）", tooltip);
         Assert.IsLessThanOrEqualTo(127, tooltip.Length);
     }
 
     [TestMethod]
     public void PanelGauges()
     {
+        // RAM 65% 在預設門檻下是綠色；commit 80% 不依門檻變色
         var panel = PanelModel.Build(ReportSamples.Typical(), null, UsageThresholds.Default);
 
-        Assert.AreEqual("Commit", panel.Commit.Label);
-        Assert.AreEqual("31.4 / 39.4 GB（80%）", panel.Commit.ValueText);
-        Assert.AreEqual(31.4 / 39.4, panel.Commit.Fraction, 0.001);
-        Assert.AreEqual(UsageLevel.Orange, panel.Commit.Level);
         Assert.AreEqual("實體 RAM", panel.Ram.Label);
         Assert.AreEqual("20.5 / 31.4 GB（65%）", panel.Ram.ValueText);
         Assert.AreEqual(20.5 / 31.4, panel.Ram.Fraction, 0.001);
-        Assert.IsNull(panel.Ram.Level);
+        Assert.AreEqual(UsageLevel.Green, panel.Ram.Level);
+        Assert.AreEqual("Commit", panel.Commit.Label);
+        Assert.AreEqual("31.4 / 39.4 GB（80%）", panel.Commit.ValueText);
+        Assert.AreEqual(31.4 / 39.4, panel.Commit.Fraction, 0.001);
+        Assert.IsNull(panel.Commit.Level);
     }
 
     [TestMethod]
-    public void PanelRowsAreTopFivePlusUnattributedWithBarsRelativeToTheLargest()
+    public void PanelRowsAreTheTopFiveByRamPlusUnattributedWithBarsRelativeToTheLargest()
     {
         var panel = PanelModel.Build(ReportSamples.Typical(), null, UsageThresholds.Default);
 
-        Assert.HasCount(6, panel.Rows);
-        Assert.AreEqual(new PanelRow("Claude", "36", "3.2 GB", 3.2 / 6.9, false), panel.Rows[0] with { BarFraction = 3.2 / 6.9 });
-        Assert.AreEqual(3.2 / 6.9, panel.Rows[0].BarFraction, 0.001);
-        Assert.AreEqual("Node.js JavaScript Runtime", panel.Rows[4].Name);
-        Assert.AreEqual("30", panel.Rows[4].CountText);
+        // 依 RAM：Windows 2.4、Claude 1.6、Edge 1.4、WebView2 1.2、ChatGPT 0.9；Node.js 0.7 排第六，不顯示
+        CollectionAssert.AreEqual(
+            new[] { AppGrouper.WindowsGroupName, "Claude", "Microsoft Edge", "Microsoft Edge WebView2", "ChatGPT", GroupedSnapshot.UnattributedName },
+            panel.Rows.Select(r => r.Name).ToArray());
+        Assert.AreEqual(new PanelRow("Claude", "36", "1.6 GB", 1.6 / 12.3, false), panel.Rows[1] with { BarFraction = 1.6 / 12.3 });
+        Assert.AreEqual(1.6 / 12.3, panel.Rows[1].BarFraction, 0.001);
         var last = panel.Rows[5];
-        Assert.AreEqual(GroupedSnapshot.UnattributedName, last.Name);
         Assert.AreEqual(string.Empty, last.CountText);
-        Assert.AreEqual("6.9 GB", last.GigabytesText);
+        Assert.AreEqual("12.3 GB", last.GigabytesText);
         Assert.AreEqual(1.0, last.BarFraction, 0.001);
         Assert.IsTrue(last.IsUnattributed);
         Assert.IsFalse(panel.Rows.Take(5).Any(r => r.IsUnattributed));
@@ -100,7 +113,7 @@ public sealed class DisplayModelTests
     public void PanelRowsWithNothingToCompareHaveEmptyBars()
     {
         var typical = ReportSamples.Typical();
-        var empty = typical with { Apps = [], UnattributedBytes = 0 };
+        var empty = typical with { Apps = [], UnattributedRamBytes = 0 };
 
         var panel = PanelModel.Build(empty, null, UsageThresholds.Default);
 

@@ -57,7 +57,7 @@ public sealed class ReportFormatterTests
         Assert.AreEqual("Claude", top[0].GetProperty("name").GetString());
         Assert.AreEqual(36, top[0].GetProperty("processCount").GetInt32());
         Assert.AreEqual(grouped.Apps[4].CommitBytes, top[4].GetProperty("commitBytes").GetInt64());
-        Assert.AreEqual(grouped.UnattributedBytes, root.GetProperty("unattributedBytes").GetInt64());
+        Assert.AreEqual(grouped.UnattributedCommitBytes, root.GetProperty("unattributedBytes").GetInt64());
     }
 
     [TestMethod]
