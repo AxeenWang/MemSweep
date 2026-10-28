@@ -44,7 +44,7 @@ MemSweep 只讀取系統資訊：不清理記憶體、不結束任何程式，�
 
 | 指令 | 說明 |
 | --- | --- |
-| `memsweep-cli status` | 文字摘要：commit、RAM、開機以來尖峰、前五名與「系統（不屬於任何程式）」 |
+| `memsweep-cli status` | 文字摘要：commit、RAM、開機以來尖峰、前五名與「系統（不屬於任何程式）」；前五名與「系統」以 commit 計 |
 | `memsweep-cli status --json` | 相同內容的 JSON，記憶體以 bytes 整數表示 |
 | `memsweep-cli check --need <GB>` | 剩餘 commit 是否足夠，`<GB>` 可帶小數，1 GB = 1024³ bytes |
 | `memsweep-cli --help` | 用法說明 |

@@ -38,11 +38,15 @@ public sealed class SystemReaderLiveTests
     [TestMethod]
     public void RamPercentMatchesTheMemoryLoad()
     {
+        uint loadBefore = TestNative.GetMemoryStatus().MemoryLoad;
         var snapshot = new SystemReader().Read();
-        var status = TestNative.GetMemoryStatus();
+        uint loadAfter = TestNative.GetMemoryStatus().MemoryLoad;
 
-        // A-10 的自動化替代：dwMemoryLoad 是 Windows 算的 RAM 使用率（無條件捨去），MemSweep 四捨五入，最多相差 1
-        Assert.AreEqual((double)status.MemoryLoad, TrayText.RamPercent(snapshot), 1.0);
+        // A-10 的自動化替代：dwMemoryLoad 是 Windows 算的 RAM 使用率（無條件捨去），MemSweep 四捨五入，最多相差 1。
+        // 容許值已被取整的差距用掉，RAM 在兩次查詢之間又會變動，所以在 Read() 前後各取一次，和兩者之間的值相差 1 以內即可
+        int percent = TrayText.RamPercent(snapshot);
+        Assert.IsGreaterThanOrEqualTo((int)Math.Min(loadBefore, loadAfter) - 1, percent);
+        Assert.IsLessThanOrEqualTo((int)Math.Max(loadBefore, loadAfter) + 1, percent);
     }
 
     [TestMethod]
