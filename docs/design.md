@@ -2,7 +2,7 @@
 
 > 狀態：已核准（2026-10-26）
 > 日期：2026-10-26
-> 修訂：2026-10-26 依 Phase 01 實測修訂 1 的 JSON 列、3.3（公司名稱比對方式、殼層與系統清單）、3.11 文字摘要範例與第 6 章風險 1（隨 Phase 01 計畫核准）；2026-10-26 依 Phase 01 整體審查補上 3.3 的孤兒輔助行程規則與輔助行程清單；2026-10-26 隨 Phase 02 計畫修訂 3.3 步驟 6 用字、3.6 小面板的建立時機與位置、3.7 前景許可、3.11 結束碼 3、第 4 章 A-07 清單與第 6 章風險 3；2026-10-26 隨 Phase 03 計畫修訂第 3 章架構圖、3.1 元件表、3.6 完整視窗、程式圖示與自訂標題列、3.9 停用條件與寫入失敗、3.10 重新啟動時接續、第 5 章 Phase 03 列與第 6 章風險 3；2026-10-27 隨 Phase 04 計畫修訂 3.1 元件表、3.6 設定視窗、3.8 儲存與失敗處理、3.9 設定檔格式、紀錄檔範圍檢查、資料夾重建與保留天數生效時機，新增 3.12 發佈；2026-10-27 依 Phase 04 整體審查補上 3.8 登錄操作失敗後的重試；2026-10-27 定為 1.0.0：3.12 新增版本號、發佈新版本與正式版位置，第 2 章與第 5 章同步補充
+> 修訂：2026-10-26 依 Phase 01 實測修訂 1 的 JSON 列、3.3（公司名稱比對方式、殼層與系統清單）、3.11 文字摘要範例與第 6 章風險 1（隨 Phase 01 計畫核准）；2026-10-26 依 Phase 01 整體審查補上 3.3 的孤兒輔助行程規則與輔助行程清單；2026-10-26 隨 Phase 02 計畫修訂 3.3 步驟 6 用字、3.6 小面板的建立時機與位置、3.7 前景許可、3.11 結束碼 3、第 4 章 A-07 清單與第 6 章風險 3；2026-10-26 隨 Phase 03 計畫修訂第 3 章架構圖、3.1 元件表、3.6 完整視窗、程式圖示與自訂標題列、3.9 停用條件與寫入失敗、3.10 重新啟動時接續、第 5 章 Phase 03 列與第 6 章風險 3；2026-10-27 隨 Phase 04 計畫修訂 3.1 元件表、3.6 設定視窗、3.8 儲存與失敗處理、3.9 設定檔格式、紀錄檔範圍檢查、資料夾重建與保留天數生效時機，新增 3.12 發佈；2026-10-27 依 Phase 04 整體審查補上 3.8 登錄操作失敗後的重試；2026-10-27 定為 1.0.0：3.12 新增版本號、發佈新版本與正式版位置，第 2 章與第 5 章同步補充；2026-10-27 畫面改以實體 RAM 為主（SPEC 1.4，1.1.0）：修訂 3.1、3.2、3.5、3.6、3.11、第 4 章，第 5 章新增 Phase 05，第 6 章新增風險 5
 > 依據：[SPEC](spec.md)（2026-10-26 核准）。條文編號（F-、R-、A-、X-）沿用 SPEC。
 >
 > 標示「〔使用者決定〕」的是使用者在討論中明確選擇的項目，其餘是 Claude 的提案，核准本文件即視為採用。
@@ -80,9 +80,9 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 | 元件 | 職責 | SPEC |
 | --- | --- | --- |
 | `Native/` | 所有 `LibraryImport` 宣告，只放唯讀查詢 | E-5、A-07 |
-| `SystemReader`（介面 `ISystemReader`） | 產生 `SystemSnapshot`：時間、開機時間、commit 已用／上限／尖峰、實體 RAM、分頁檔大小、所有行程（PID、父 PID、建立時間、映像名稱、私有 commit、工作集） | F-02、F-05、F-11 |
+| `SystemReader`（介面 `ISystemReader`） | 產生 `SystemSnapshot`：時間、開機時間、commit 已用／上限／尖峰、實體 RAM、分頁檔大小、所有行程（PID、父 PID、建立時間、映像名稱、私有 commit、私用工作集） | F-02、F-05、F-11、F-23 |
 | `ProcessInfoCache` | 以（PID、建立時間）為鍵，快取執行檔路徑、檔案描述、公司名稱與 node 套件標籤；行程結束後移除 | 第 8 章 |
-| `AppGrouper` | 依 3.3 的演算法，把快照轉成依 commit 排序的應用程式清單與「系統（不屬於任何程式）」 | 第 8 章、F-23 |
+| `AppGrouper` | 依 3.3 的演算法，把快照轉成應用程式清單與「系統（不屬於任何程式）」。每個應用程式與明細都有 commit 與 RAM 兩種合計，「系統」也有兩種計法（3.2）。清單依 commit 排序，供命令列、報告與尖峰紀錄使用；畫面自行改依 RAM 排序（3.6） | 第 8 章、F-11、F-23 |
 | `ReportFormatter` | 文字摘要與 JSON | F-40、F-41、F-12 |
 | `HeadroomCheck` | 計算剩餘 commit，回傳結束碼與輸出內容 | F-42 |
 | `PeakTracker` | 追蹤開機尖峰與每日尖峰，保存全部尖峰紀錄並做保留天數清理 | F-30～F-33 |
@@ -99,7 +99,7 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 | --- | --- |
 | commit 已用、上限、開機以來尖峰；實體 RAM | `K32GetPerformanceInfo` |
 | 開機時間 | `NtQuerySystemInformation(SystemTimeOfDayInformation)` |
-| 所有行程的 PID、父 PID、建立時間、映像名稱、私有 commit、工作集 | `NtQuerySystemInformation(SystemProcessInformation)` |
+| 所有行程的 PID、父 PID、建立時間、映像名稱、私有 commit、私用工作集 | `NtQuerySystemInformation(SystemProcessInformation)` |
 | 分頁檔大小 | `NtQuerySystemInformation(SystemPageFileInformation)` |
 | 執行檔完整路徑 | `OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION)` + `QueryFullProcessImageNameW` |
 | 檔案描述與公司名稱 | `System.Diagnostics.FileVersionInfo`（以路徑快取） |
@@ -107,7 +107,9 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 
 - 行程 commit 採用 `SYSTEM_PROCESS_INFORMATION` 的 `PagefileUsage`（即 `PrivateUsage`），預期與工作管理員「認可大小」一致；Phase 01 以 A-02 驗證。
 - 受保護的行程開不了控制代碼時，路徑、描述、公司視為取不到，不重試。
-- 「系統（不屬於任何程式）」= commit 已用 − 所有行程 `PagefileUsage` 的總和，小於 0 時以 0 計。
+- 行程 RAM 採用同一筆 `SYSTEM_PROCESS_INFORMATION` 的 `WorkingSetPrivateSize`（私用工作集），不新增 API；預期與工作管理員「詳細資料」頁的「記憶體」欄一致，Phase 05 以 A-11 驗證。原本的工作集（`WorkingSetSize`，含共用的 DLL 等）只用在 F-23 的「實際 RAM」欄，Phase 05 起不再顯示；`SystemReader` 仍讀取它，供即時測試核對私用工作集不大於工作集（第 4 章）。
+- RAM 已用 = `K32GetPerformanceInfo` 的實體 RAM 總量 − 可用量（換算成 bytes），RAM 使用率依此計算；預期與工作管理員「處理程序」頁「記憶體」欄標題的百分比一致，Phase 05 以 A-10 驗證。
+- 「系統（不屬於任何程式）」以 commit 計 = commit 已用 − 所有行程 `PagefileUsage` 的總和；以 RAM 計 = RAM 已用 − 所有行程 `WorkingSetPrivateSize` 的總和。兩者小於 0 時都以 0 計。
 
 ### 3.3 應用程式歸組演算法（實作 SPEC 第 8 章）
 
@@ -149,9 +151,9 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 
 ### 3.5 系統匣圖示
 
-- 以 `System.Drawing` 依目前 DPI 的小圖示尺寸繪製數字圖示（F-02、F-03）。使用率 100% 時以較小字型畫出「100」。
+- 以 `System.Drawing` 依目前 DPI 的小圖示尺寸繪製數字圖示（F-02、F-03）。使用率 100% 時以較小字型畫出「100」。Phase 05 起數字與顏色都依 RAM 使用率（SPEC 1.4），門檻設定與繪製方式不變。
 - 每次更新後釋放舊圖示的 `HICON`，避免控制代碼累積。
-- 提示文字（F-05）範例：`MemSweep` / `Commit 31.4 / 39.4 GB（80%）` / `RAM 20.5 / 31.4 GB`。
+- 提示文字（F-05）範例：`MemSweep` / `RAM 16.5 / 31.4 GB（52%）` / `Commit 27.4 / 63.4 GB（43%）`。
 - 右鍵選單（F-07）的項目隨 Phase 逐步出現：Phase 02 有「開啟小面板」「結束 MemSweep」，Phase 03 加「完整清單…」，Phase 04 加「設定…」。
 
 ### 3.6 視窗
@@ -159,10 +161,11 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 - `App.OnStartup` 在建立任何視窗前設定 `RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly`。
 - 小面板（F-10～F-12）：無邊框、不顯示在工作列、最上層；出現在主螢幕工作區的右下角（Windows 11 的通知區域固定在主螢幕底部的工作列）；失去焦點或按 Esc 時隱藏。視窗在第一次開啟時才建立，之後以顯示／隱藏切換（量測顯示關閉視窗也不會釋放記憶體，隱藏可讓重開更快）。Phase 02 實測：只掛在系統匣時行程約 18 MB，若啟動時就建立小面板約 58 MB，開過小面板後約 80 MB。
 - 小面板開著時點系統匣圖示，焦點會先移走讓小面板隱藏；隱藏後 400 毫秒內的同一次點擊不再把它打開，所以點圖示可以開關小面板。
-- 完整視窗（F-20～F-24）：一般視窗，三個分頁。第一次開啟時才建立，只在顯示時更新。關閉時真正關閉，並在 UI 空閒時以 `GCCollectionMode.Aggressive` 回收 MemSweep 自己的記憶體，下次開啟再建立：隱藏的視窗會保留整個畫面樹，Phase 03 原型實測隱藏後仍約 109 MB，關閉並回收後穩定在約 86 MB。「程式」分頁用 `ItemsControl`，每 2 秒原地更新各列而不整份重建；展開狀態保存在顯示模型，關閉再開仍在。
+- 小面板與「總覽」的內容（F-11、F-22，Phase 05 起）：RAM 量表在前，依門檻變色；commit 量表在後，固定使用目前 RAM 量表的中性色。前五名依 RAM 由大到小；「系統（不屬於任何程式）」列以 RAM 計，不參與排序，固定在前五名之後（F-11）。數值與相對長條都是 RAM。尖峰那一行維持「開機以來 commit 尖峰」。
+- 完整視窗（F-20～F-24）：一般視窗，三個分頁。第一次開啟時才建立，只在顯示時更新。關閉時真正關閉，並在 UI 空閒時以 `GCCollectionMode.Aggressive` 回收 MemSweep 自己的記憶體，下次開啟再建立：隱藏的視窗會保留整個畫面樹，Phase 03 原型實測隱藏後仍約 109 MB，關閉並回收後穩定在約 86 MB。「程式」分頁用 `ItemsControl`，每 2 秒原地更新各列而不整份重建；展開狀態保存在顯示模型，關閉再開仍在。Phase 05 起「程式」分頁依 RAM 由大到小排序，欄位依序為名稱、行程數、RAM、commit；展開的明細也依 RAM 排序並顯示 RAM 與 commit；「系統」列兩欄分別是以 RAM 計與以 commit 計的數值。RAM 比 commit 變動頻繁，數值相近的兩列可能隨更新互換位置，這是預期行為。
 - 程式圖示（F-62）：`MemSweep.Desktop/Assets/MemSweep.ico`，深藍圓角方塊上的 240 度 commit 量表，綠、橘、紅三段依預設門檻 70%、85% 分段（配色同深色主題），白色指針指向 80%。含 16、20、24、32、40、48、64、256 px 八格，每格都是 PNG。兩支 exe 以 `ApplicationIcon` 內嵌，自訂標題列依 DPI 取用最接近的一格；系統匣仍顯示數字（F-02）。
 - 自訂標題列（F-62）：視窗以 `WindowChrome` 取代系統標題列（`CaptionHeight` 32、`GlassFrameThickness` 0），拖曳、雙擊最大化、邊緣調整大小、右鍵系統選單與貼齊仍由系統處理。`TitleBar` 顯示圖示、視窗標題與最小化、最大化（還原）、關閉三個按鈕（Segoe Fluent Icons 字型），顏色跟著深淺色，滑過關閉按鈕時為紅底白字，視窗不在前景時標題變淡。最大化時內容往內縮 `SM_CXSIZEFRAME` + `SM_CXPADDEDBORDER`（WPF 的 `SystemParameters` 不含邊框間距），標題列才不會超出螢幕。不提供 Windows 11 滑過最大化按鈕時的貼齊版面選單，可用 Win+Z 或拖曳到螢幕邊緣。完整視窗的捲軸也改成跟著深淺色的細捲軸。設定視窗（Phase 04）沿用同一個 `TitleBar`。
-- 設定視窗（F-50）：橘色門檻、紅色門檻、開機自動啟動、保留天數。驗證規則：1 ≤ 橘色 < 紅色 ≤ 100；保留天數 1～3650。
+- 設定視窗（F-50）：橘色門檻、紅色門檻、開機自動啟動、保留天數。驗證規則：1 ≤ 橘色 < 紅色 ≤ 100；保留天數 1～3650。Phase 05 起門檻那一區的標題由「commit 使用率的顏色」改為「RAM 使用率的顏色」，`settings.json` 的欄位與驗證規則不變。
   - 數字用輸入框，關閉輸入法，注音模式下也直接打出半形數字；貼上的全形數字也接受。按「儲存」（Enter）時才檢查，不合法時在按鈕上方顯示第一個錯誤，視窗不關閉；「取消」（Esc）不儲存就關閉。
   - 固定大小，沿用 `TitleBar`，只顯示關閉按鈕：`TitleBar` 依視窗的 `ResizeMode` 隱藏最小化與最大化按鈕。
   - 和完整視窗一樣，第一次開啟時才建立，關閉時真正關閉並在 UI 空閒時回收記憶體；開著時再選「設定…」只會把它帶到前面。
@@ -235,6 +238,7 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 | 參數錯誤 | 錯誤訊息與用法，結束碼 2 |
 | 無法取得系統記憶體資訊 | 錯誤訊息寫到 stderr，不印堆疊，結束碼 3 |
 
+- 畫面改以 RAM 為主（SPEC 1.4）後，文字摘要、JSON 與 `check` 的輸出都不變，前五名與「系統（不屬於任何程式）」仍以 commit 計（SPEC 7.5）。「複製報告」沿用文字摘要（3.6）。
 - `<GB>` 可帶小數，必須大於 0。全工具的 1 GB 都是 1024³ bytes，與工作管理員一致。
 - 輸出使用 UTF-8。
 - 文字摘要範例：
@@ -301,14 +305,15 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 ## 4. 測試策略
 
 - **單元測試**（`MemSweep.Core.Tests`，用合成快照，不碰真實系統）：
-  - `AppGrouper`：R-1～R-6 每一條與 A-09 的五個範例。
+  - `AppGrouper`：R-1～R-6 每一條與 A-09 的五個範例；Phase 05 起加上 RAM 合計與兩種計法的「系統」。
+  - 系統匣數字、顏色與提示文字，小面板與「程式」分頁的 RAM 排序（Phase 05）。
   - `PeakTracker`：開機尖峰、每日尖峰、跨日、「未知」的情況。
   - `PeakStore`：CSV 往返、BOM、CRLF、保留天數清理。
   - `SettingsStore`：預設值、不合法內容、門檻驗證。
   - `ReportFormatter`、`HeadroomCheck`（A-04）、命令列參數解析。
-- **即時系統測試**（標記 `Live` 類別，唯讀）：`SystemReader` 取得的數值合理；commit 已用與 `Win32_OperatingSystem` 的數值相差在容許範圍內，作為 A-01 的自動化替代。
+- **即時系統測試**（標記 `Live` 類別，唯讀）：`SystemReader` 取得的數值合理；commit 已用與 `Win32_OperatingSystem` 的數值相差在容許範圍內，作為 A-01 的自動化替代。Phase 05 起加上：各行程的私用工作集不大於工作集；RAM 使用率與 `GlobalMemoryStatusEx` 的 `dwMemoryLoad` 相差不超過 1 個百分點，作為 A-10 的自動化替代。
 - **A-07 自動檢查**：以反射列出 Core、Desktop、Cli 組件中所有 P/Invoke 進入點，確認沒有 `EmptyWorkingSet`、`SetProcessWorkingSetSize`、`SetProcessWorkingSetSizeEx`、`NtSetSystemInformation`、`SetSystemFileCacheSize`、`AdjustTokenPrivileges`、`TerminateProcess`、`NtTerminateProcess`、`NtSetInformationProcess`、`VirtualFreeEx`。這項檢查只涵蓋以 `DllImport`／`LibraryImport` 宣告的呼叫。
-- **人工驗收**（各 Phase 結束時）：A-01 對照工作管理員、A-02、A-03 常駐 1 小時量測、A-05 以 Excel 開啟、A-06、A-08。
+- **人工驗收**（各 Phase 結束時）：A-01 對照工作管理員、A-02、A-03 常駐 1 小時量測、A-05 以 Excel 開啟、A-06、A-08；Phase 05 加上 A-10、A-11 對照工作管理員。
 - 任何測試都不得改變系統記憶體狀態或實際寫入開機啟動登錄（AGENTS.md「System Safety」）。
 
 ## 5. Phase 切分
@@ -321,10 +326,11 @@ MemSweep.Cli：單次取樣 ──▶ status／status --json／check
 | 02 系統匣與小面板 | `phase-02-tray-flyout` | MemSweep.Desktop：軟體繪圖、數字圖示與提示、右鍵選單（開啟小面板、結束）、小面板、複製報告、單一執行個體、深淺色；`PeakTracker`（只在記憶體中，供小面板顯示開機尖峰）；門檻先用預設值 | F-01～F-07（選單部分）、F-10～F-12（不含「完整清單…」）、F-31、F-60、F-61、A-03、A-08 |
 | 03 尖峰紀錄與完整視窗 | `phase-03-peaks-window` | `PeakStore` 與 CSV、寫入節流、保留天數清理（先用預設 90 天）；完整視窗三個分頁；選單與小面板加「完整清單…」；程式圖示與自訂標題列 | F-20～F-24、F-30～F-34、F-52（尖峰紀錄部分）、F-62、A-03、A-05 |
 | 04 設定與發佈 | `phase-04-settings-release` | `SettingsStore` 與設定視窗、門檻與保留天數改讀設定、開機自動啟動、選單加「設定…」；發佈指令與 README 使用說明；完整驗收 A-01～A-09 | F-50～F-52、F-07（設定）、A-01～A-09 |
+| 05 以 RAM 為主 | `phase-05-ram-first` | SPEC 1.4：`SystemReader` 改讀私用工作集；`AppGrouper` 加上 RAM 合計與兩種計法的「系統」；系統匣數字、顏色與提示改依 RAM；小面板、「總覽」與「程式」分頁改依 RAM 排序與顯示；設定視窗門檻標題；README 使用說明；命令列與尖峰紀錄不變 | F-02、F-03、F-05、F-11、F-12、F-22、F-23、A-03、A-10、A-11 |
 
 Phase 01 完成後，Claude 就能先用 `memsweep-cli check` 檢查剩餘 commit，不必等常駐程式完成。
 
-四個 Phase 完成並合併後，2026-10-27 定為 1.0.0（3.12）。之後的修正與新功能依 3.12 的版本號規則發佈。
+四個 Phase 完成並合併後，2026-10-27 定為 1.0.0（3.12）。之後的修正與新功能依 3.12 的版本號規則發佈。Phase 05 會改 SPEC，屬於新功能，合併後以 `release/v1.1.0` 發佈 1.1.0；尖峰紀錄的 CSV、`settings.json` 與命令列輸出都不變，不需要升主版本。
 
 ## 6. 風險與驗證
 
@@ -332,6 +338,7 @@ Phase 01 完成後，Claude 就能先用 `memsweep-cli check` 檢查剩餘 commi
 2. **行程 commit 的口徑**：`PagefileUsage` 若與工作管理員「認可大小」不一致，A-02 會失敗。Phase 01 驗證。2026-10-26 已驗證：546 個行程的 `PagefileUsage` 與私有 commit 完全一致。
 3. **介面記憶體超標**：1.1 的 77 MB 是空白清單的量測值。Phase 02、03 結束時都量 A-03；超過 100 MB 時先回報，再討論對策（例如完整視窗關閉時真正釋放，或改用 WinForms）。Phase 02 原型實測：開過小面板後約 80 MB，餘裕約 20 MB。Phase 03 原型實測：完整視窗開著時約 95～105 MB，隱藏後仍約 109 MB；使用者選擇關閉時真正釋放（3.6），關閉後約 86 MB。另試過的 GC 設定：`System.GC.ConserveMemory` 與 `System.GC.RegionSize` 效果不明顯；`System.GC.Gen0MaxBudget` 設為 4 MB 時開著視窗約省 10 MB，但官方文件沒有列出這個設定，沒有採用，留作之後的備案。Phase 03 結束時 A-03 為 98.7 MB（最高 99.7 MB）。Phase 04 結束時以發佈版量測（開過小面板、完整視窗與設定視窗後全部關閉，常駐 60 分鐘）：73.3 MB，期間最高 91.1 MB。
 4. **清單不完整**：殼層、系統與輔助行程清單漏列時，歸組會出錯。依實測調整（R-7），調整時同步更新 3.3。
+5. **RAM 的口徑**：工作管理員「處理程序」頁「記憶體」欄標題的百分比如果不是（總量 − 可用量）÷ 總量，或「詳細資料」頁的「記憶體」欄不是 `WorkingSetPrivateSize`（例如暫停中的市集應用程式只算作用中的部分），A-10、A-11 會失敗。Phase 05 開工時先以實機快照對照工作管理員；不符時先回報，再修改本文件。
 
 ## 7. 對 SPEC 的解讀與補充
 

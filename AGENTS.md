@@ -17,7 +17,7 @@ Change the marker to `CodeLab-Governance: required` when failed managed-mode ver
 
 ## Project
 
-MemSweep is a read-only Windows commit-charge monitor. A tray app shows commit usage, the applications that hold it, and commit peaks. A command-line tool lets an agent check commit headroom before memory-heavy work. `docs/spec.md` defines what to build, and `docs/design.md` defines how.
+MemSweep is a read-only Windows memory monitor. A tray app shows physical RAM usage and the applications that use it, along with commit usage and commit peaks. A command-line tool lets an agent check commit headroom before memory-heavy work. `docs/spec.md` defines what to build, and `docs/design.md` defines how.
 
 - Remote: `https://github.com/AxeenWang/MemSweep.git`
 - Default branch: `main`

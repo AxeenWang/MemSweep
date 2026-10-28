@@ -19,7 +19,7 @@ Change the marker to `CodeLab-Governance: required` when failed managed-mode ver
 
 ## 專案
 
-MemSweep 是唯讀的 Windows commit 監看工具。系統匣程式顯示 commit 使用率、佔用 commit 的應用程式與 commit 尖峰；命令列工具讓代理在吃記憶體的工作開始前，先檢查剩餘 commit。要做什麼由 `docs/spec.md` 定義，怎麼做由 `docs/design.md` 定義。
+MemSweep 是唯讀的 Windows 記憶體監看工具。系統匣程式顯示實體 RAM 使用率與使用 RAM 的應用程式，並顯示 commit 使用率與 commit 尖峰；命令列工具讓代理在吃記憶體的工作開始前，先檢查剩餘 commit。要做什麼由 `docs/spec.md` 定義，怎麼做由 `docs/design.md` 定義。
 
 - 遠端：`https://github.com/AxeenWang/MemSweep.git`
 - 預設分支：`main`
