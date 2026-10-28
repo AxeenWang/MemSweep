@@ -33,7 +33,7 @@
 
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="0,12,8,0">
-      <!-- 欄位：展開、名稱、行程數、commit、實際 RAM（工作集） -->
+      <!-- 欄位：展開、名稱、行程數、RAM（私用工作集）、commit（F-23） -->
       <Grid Margin="0,0,0,4">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="20" />
@@ -44,8 +44,8 @@
         </Grid.ColumnDefinitions>
         <TextBlock Grid.Column="1" Text="名稱" Style="{StaticResource HeaderText}" />
         <TextBlock Grid.Column="2" Text="行程數" Style="{StaticResource HeaderText}" HorizontalAlignment="Right" />
-        <TextBlock Grid.Column="3" Text="Commit" Style="{StaticResource HeaderText}" HorizontalAlignment="Right" />
-        <TextBlock Grid.Column="4" Text="實際 RAM" Style="{StaticResource HeaderText}" HorizontalAlignment="Right" />
+        <TextBlock Grid.Column="3" Text="RAM" Style="{StaticResource HeaderText}" HorizontalAlignment="Right" />
+        <TextBlock Grid.Column="4" Text="Commit" Style="{StaticResource HeaderText}" HorizontalAlignment="Right" />
       </Grid>
       <Border Height="1" Background="{DynamicResource PanelBorderBrush}" Margin="0,0,0,4" />
 
@@ -64,8 +64,8 @@
                 <ToggleButton x:Name="Toggle" IsChecked="{Binding IsExpanded}" Style="{StaticResource ExpandToggle}" />
                 <TextBlock x:Name="AppName" Grid.Column="1" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
                 <TextBlock Grid.Column="2" Text="{Binding CountText}" Foreground="{DynamicResource MutedTextBrush}" HorizontalAlignment="Right" />
-                <TextBlock Grid.Column="3" Text="{Binding CommitText}" HorizontalAlignment="Right" />
-                <TextBlock Grid.Column="4" Text="{Binding WorkingSetText}" HorizontalAlignment="Right" />
+                <TextBlock Grid.Column="3" Text="{Binding RamText}" HorizontalAlignment="Right" />
+                <TextBlock Grid.Column="4" Text="{Binding CommitText}" HorizontalAlignment="Right" />
               </Grid>
 
               <!-- 明細：依執行檔名稱合併，node 再依套件區分 -->
@@ -81,8 +81,8 @@
                         <ColumnDefinition Width="84" />
                       </Grid.ColumnDefinitions>
                       <TextBlock Text="{Binding Name}" Foreground="{DynamicResource MutedTextBrush}" TextTrimming="CharacterEllipsis" />
-                      <TextBlock Grid.Column="1" Text="{Binding CommitText}" Foreground="{DynamicResource MutedTextBrush}" HorizontalAlignment="Right" />
-                      <TextBlock Grid.Column="2" Text="{Binding WorkingSetText}" Foreground="{DynamicResource MutedTextBrush}" HorizontalAlignment="Right" />
+                      <TextBlock Grid.Column="1" Text="{Binding RamText}" Foreground="{DynamicResource MutedTextBrush}" HorizontalAlignment="Right" />
+                      <TextBlock Grid.Column="2" Text="{Binding CommitText}" Foreground="{DynamicResource MutedTextBrush}" HorizontalAlignment="Right" />
                     </Grid>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>

@@ -48,49 +48,55 @@ public sealed class FullWindowModelTests
     }
 
     [TestMethod]
-    public void AppsListsEveryAppByCommitThenUnattributed()
+    public void AppsListsEveryAppByRamThenUnattributed()
     {
         var model = Model();
 
         model.Update(ReportSamples.Typical(), NoPeaks);
 
-        Assert.HasCount(7, model.Apps);
-        var claude = model.Apps[0];
-        Assert.AreEqual("Claude", claude.Name);
+        CollectionAssert.AreEqual(
+            new[]
+            {
+                AppGrouper.WindowsGroupName, "Claude", "Microsoft Edge", "Microsoft Edge WebView2", "ChatGPT",
+                "Node.js JavaScript Runtime", GroupedSnapshot.UnattributedName,
+            },
+            model.Apps.Select(a => a.Name).ToArray());
+        var claude = model.Apps[1];
         Assert.AreEqual("36", claude.CountText);
+        Assert.AreEqual("1.6 GB", claude.RamText);
         Assert.AreEqual("3.2 GB", claude.CommitText);
-        Assert.AreEqual("1.6 GB", claude.WorkingSetText);
         Assert.IsFalse(claude.IsUnattributed);
-        Assert.AreEqual("Microsoft Edge", model.Apps[5].Name);
         var last = model.Apps[6];
         Assert.IsTrue(last.IsUnattributed);
-        Assert.AreEqual(GroupedSnapshot.UnattributedName, last.Name);
-        Assert.AreEqual("6.9 GB", last.CommitText);
         Assert.AreEqual(string.Empty, last.CountText);
-        Assert.AreEqual(string.Empty, last.WorkingSetText);
+        Assert.AreEqual("12.3 GB", last.RamText);
+        Assert.AreEqual("6.9 GB", last.CommitText);
         Assert.IsEmpty(last.Components);
     }
 
     [TestMethod]
-    public void ComponentsShowTheProcessCountAfterTheName()
+    public void ComponentsAreSortedByRamAndShowTheProcessCountAfterTheName()
     {
+        // cmd.exe 與 claude.exe 的 RAM 相同，依名稱排序
         var model = Model();
         var claude = App(
             "Claude",
             3.2,
+            new AppComponent("cmd.exe", 1, Gb(0.1), Gb(1.0)),
             new AppComponent("claude.exe", 14, Gb(2.0), Gb(1.0)),
-            new AppComponent("node：@playwright/mcp", 2, Gb(0.4), Gb(0.3)));
+            new AppComponent("node：@playwright/mcp", 2, Gb(0.4), Gb(1.2)));
 
         model.Update(WithApps(claude), NoPeaks);
 
         CollectionAssert.AreEqual(
             new[]
             {
-                new ComponentRow("claude.exe ×14", "2.0 GB", "1.0 GB"),
-                new ComponentRow("node：@playwright/mcp ×2", "0.4 GB", "0.3 GB"),
+                new ComponentRow("node：@playwright/mcp ×2", "1.2 GB", "0.4 GB"),
+                new ComponentRow("claude.exe ×14", "1.0 GB", "2.0 GB"),
+                new ComponentRow("cmd.exe ×1", "1.0 GB", "0.1 GB"),
             },
             model.Apps[0].Components.ToArray());
-        Assert.AreEqual("16", model.Apps[0].CountText);
+        Assert.AreEqual("17", model.Apps[0].CountText);
     }
 
     [TestMethod]
@@ -108,7 +114,7 @@ public sealed class FullWindowModelTests
         Assert.AreSame(claude, model.Apps[0]);
         Assert.IsTrue(claude.IsExpanded);
         Assert.AreEqual("3.5 GB", claude.CommitText);
-        CollectionAssert.AreEquivalent(new[] { "CommitText", "WorkingSetText" }, changed);
+        CollectionAssert.AreEquivalent(new[] { "RamText", "CommitText" }, changed);
     }
 
     [TestMethod]

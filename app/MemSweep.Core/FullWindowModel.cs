@@ -33,7 +33,7 @@ public sealed class FullWindowModel : ObservableObject
     /// <summary>總覽另外顯示的分頁檔大小（F-22）。</summary>
     public string PageFileText { get => _pageFileText; private set => Set(ref _pageFileText, value); }
 
-    /// <summary>所有應用程式依 commit 由大到小，最後一列是「系統（不屬於任何程式）」（F-23）。</summary>
+    /// <summary>所有應用程式依 RAM 由大到小，最後一列是「系統（不屬於任何程式）」（F-23）。</summary>
     public ObservableCollection<AppListRow> Apps { get; } = [];
 
     /// <summary>開機尖峰，新的在前。</summary>
@@ -62,11 +62,11 @@ public sealed class FullWindowModel : ObservableObject
     private void UpdateApps(GroupedSnapshot grouped)
     {
         int index = 0;
-        foreach (var app in grouped.Apps)
+        foreach (var app in grouped.AppsByRam)
         {
             Place(index++, app.Name, false).Update(app);
         }
-        Place(index++, UnattributedKey, true).UpdateUnattributed(grouped.UnattributedCommitBytes);
+        Place(index++, UnattributedKey, true).UpdateUnattributed(grouped.UnattributedRamBytes, grouped.UnattributedCommitBytes);
 
         // 這次沒有出現的列都被擠到最後面
         while (Apps.Count > index)
