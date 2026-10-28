@@ -11,10 +11,10 @@
   </UserControl.Resources>
 
   <StackPanel>
-    <!-- commit 量表：顏色依門檻（F-03） -->
+    <!-- 實體 RAM 量表：顏色依門檻（F-03、F-11） -->
     <DockPanel>
-      <TextBlock DockPanel.Dock="Right" Text="{Binding Commit.ValueText, Mode=OneTime}" />
-      <TextBlock Text="{Binding Commit.Label, Mode=OneTime}" FontWeight="SemiBold" />
+      <TextBlock DockPanel.Dock="Right" Text="{Binding Ram.ValueText, Mode=OneTime}" />
+      <TextBlock Text="{Binding Ram.Label, Mode=OneTime}" FontWeight="SemiBold" />
     </DockPanel>
     <Grid Height="8" Margin="0,4,0,10">
       <Border Background="{DynamicResource TrackBrush}" CornerRadius="4" />
@@ -23,31 +23,31 @@
           <Style TargetType="Border" BasedOn="{StaticResource FillStyle}">
             <Setter Property="Background" Value="{DynamicResource GreenBrush}" />
             <Style.Triggers>
-              <DataTrigger Binding="{Binding Commit.Level, Mode=OneTime}" Value="Orange">
+              <DataTrigger Binding="{Binding Ram.Level, Mode=OneTime}" Value="Orange">
                 <Setter Property="Background" Value="{DynamicResource OrangeBrush}" />
               </DataTrigger>
-              <DataTrigger Binding="{Binding Commit.Level, Mode=OneTime}" Value="Red">
+              <DataTrigger Binding="{Binding Ram.Level, Mode=OneTime}" Value="Red">
                 <Setter Property="Background" Value="{DynamicResource RedBrush}" />
               </DataTrigger>
             </Style.Triggers>
           </Style>
         </Border.Style>
         <Border.RenderTransform>
-          <ScaleTransform ScaleX="{Binding Commit.Fraction, Mode=OneTime}" />
+          <ScaleTransform ScaleX="{Binding Ram.Fraction, Mode=OneTime}" />
         </Border.RenderTransform>
       </Border>
     </Grid>
 
-    <!-- 實體 RAM 量表：固定用強調色 -->
+    <!-- commit 量表：固定用強調色，不依門檻變色（F-11） -->
     <DockPanel>
-      <TextBlock DockPanel.Dock="Right" Text="{Binding Ram.ValueText, Mode=OneTime}" />
-      <TextBlock Text="{Binding Ram.Label, Mode=OneTime}" FontWeight="SemiBold" />
+      <TextBlock DockPanel.Dock="Right" Text="{Binding Commit.ValueText, Mode=OneTime}" />
+      <TextBlock Text="{Binding Commit.Label, Mode=OneTime}" FontWeight="SemiBold" />
     </DockPanel>
     <Grid Height="8" Margin="0,4,0,10">
       <Border Background="{DynamicResource TrackBrush}" CornerRadius="4" />
       <Border Style="{StaticResource FillStyle}" Background="{DynamicResource AccentBrush}">
         <Border.RenderTransform>
-          <ScaleTransform ScaleX="{Binding Ram.Fraction, Mode=OneTime}" />
+          <ScaleTransform ScaleX="{Binding Commit.Fraction, Mode=OneTime}" />
         </Border.RenderTransform>
       </Border>
     </Grid>

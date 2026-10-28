@@ -24,7 +24,7 @@ public sealed class FullWindowModel : ObservableObject
         _zone = zone;
     }
 
-    /// <summary>commit 量表的顏色門檻；設定變更後從下一次 Update 開始套用。</summary>
+    /// <summary>RAM 量表的顏色門檻；設定變更後從下一次 Update 開始套用。</summary>
     public UsageThresholds Thresholds { get; set; }
 
     /// <summary>總覽：小面板的全部資訊（F-22）。</summary>

@@ -39,12 +39,12 @@ public sealed class FullWindowModelTests
     {
         var model = Model();
         model.Update(ReportSamples.Typical(), NoPeaks);
-        Assert.AreEqual(UsageLevel.Orange, model.Overview!.Commit.Level);
+        Assert.AreEqual(UsageLevel.Green, model.Overview!.Ram.Level);
 
         model.Thresholds = new UsageThresholds(60, 75);
         model.Update(ReportSamples.Typical(), NoPeaks);
 
-        Assert.AreEqual(UsageLevel.Red, model.Overview!.Commit.Level);
+        Assert.AreEqual(UsageLevel.Orange, model.Overview!.Ram.Level);
     }
 
     [TestMethod]
